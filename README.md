@@ -1,1 +1,1 @@
-# video-processing-consumer-service
+# video-splitter-consumer-service
