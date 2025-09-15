@@ -4,16 +4,19 @@ import br.com.video.splitter.application.gateway.VideoGateway;
 import br.com.video.splitter.common.interfaces.VideoStorageFetcher;
 import br.com.video.splitter.domain.VideoInfo;
 import jakarta.enterprise.context.ApplicationScoped;
-import lombok.RequiredArgsConstructor;
+import jakarta.inject.Inject;
 
 import java.io.InputStream;
 import java.util.Optional;
 
 @ApplicationScoped
-@RequiredArgsConstructor
 public class VideoGatewayImpl implements VideoGateway {
     private final VideoStorageFetcher videoStorageFetcher;
 
+    @Inject
+    public VideoGatewayImpl(VideoStorageFetcher videoStorageFetcher) {
+        this.videoStorageFetcher = videoStorageFetcher;
+    }
 
     @Override
     public Optional<InputStream> getVideo(VideoInfo videoInfo) {
