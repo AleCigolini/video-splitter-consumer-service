@@ -89,7 +89,6 @@ public class SplitVideoUseCaseImpl implements SplitVideoUseCase {
                 try (InputStream chunkStream = new FileInputStream(chunk.toFile())) {
                     persister.save(chunkInfo, chunkStream, length);
                 }
-                // Publica evento após persistir o chunk
                 eventGateway.publishVideoSplitted(chunkInfo);
             }
         } catch (IOException | InterruptedException e) {
