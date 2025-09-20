@@ -1,9 +1,9 @@
 package br.com.video.splitter.application.usecase.impl;
 
+import br.com.video.splitter.application.gateway.VideoEventGateway;
 import br.com.video.splitter.application.usecase.SplitVideoUseCase;
 import br.com.video.splitter.common.interfaces.VideoStoragePersister;
 import br.com.video.splitter.domain.VideoInfo;
-import br.com.video.splitter.application.gateway.VideoEventGateway;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
@@ -33,74 +33,147 @@ public class SplitVideoUseCaseImpl implements SplitVideoUseCase {
     public void splitVideo(InputStream inputStream, VideoInfo videoInfo) {
         Path tempInput = null;
         Path tempOutputDir = null;
-        String segmentTime = System.getenv("SEGMENT_TIME");
-        if (segmentTime == null || segmentTime.isBlank()) {
-            segmentTime = "30";
-        }
+        String segmentTime = resolveSegmentTime();
         try {
-            tempInput = Files.createTempFile("video-input-", ".mp4");
-            Files.copy(inputStream, tempInput, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+            tempInput = createTempInputFrom(inputStream);
+            tempOutputDir = createTempOutputDir();
 
-            tempOutputDir = Files.createTempDirectory("video-chunks-");
-            String outputPattern = tempOutputDir.resolve("chunk_%03d.mp4").toString();
+            executeSegmentation(tempInput, tempOutputDir, segmentTime);
 
-            List<String> command = List.of(
-                    "ffmpeg",
-                    "-hide_banner",
-                    "-loglevel", "error",
-                    "-i", tempInput.toString(),
-                    "-map", "0",
-                    "-c", "copy",
-                    "-f", "segment",
-                    "-segment_time", segmentTime,
-                    "-reset_timestamps", "1",
-                    outputPattern
-            );
-
-            ProcessBuilder pb = new ProcessBuilder(command);
-            pb.redirectErrorStream(true);
-            Process process = pb.start();
-
-            try (InputStream is = process.getInputStream()) {
-                is.transferTo(OutputStream.nullOutputStream());
-            }
-            int exit = process.waitFor();
-            if (exit != 0) {
-                throw new RuntimeException("Falha ao executar FFmpeg para segmentação. Código de saída: " + exit);
-            }
-
-            List<Path> chunkFiles = new ArrayList<>();
-            try (var stream = Files.list(tempOutputDir)) {
-                stream.filter(Files::isRegularFile)
-                        .sorted(Comparator.comparing(Path::toString))
-                        .forEach(chunkFiles::add);
-            }
-
-            for (int i = 0; i < chunkFiles.size(); i++) {
-                Path chunk = chunkFiles.get(i);
-                String chunkFileName = String.format("%03d.mp4", i);
-                long length = Files.size(chunk);
-                VideoInfo chunkInfo = new VideoInfo(
-                        videoInfo.getId(),
-                        videoInfo.getContainerName(),
-                        videoInfo.getConnectionString(),
-                        chunkFileName
-                );
-                try (InputStream chunkStream = new FileInputStream(chunk.toFile())) {
-                    persister.save(chunkInfo, chunkStream, length);
-                }
-                eventGateway.publishVideoSplitted(chunkInfo);
-            }
-        } catch (IOException | InterruptedException e) {
-            Thread.currentThread().interrupt();
+            List<Path> chunkFiles = listChunkFiles(tempOutputDir);
+            persistAndPublishChunks(chunkFiles, videoInfo);
+        } catch (IOException e) {
             throw new RuntimeException("Erro ao dividir e persistir vídeo: " + e.getMessage(), e);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException("Processo interrompido durante a divisão do vídeo: " + e.getMessage(), e);
         } finally {
             safeDelete(tempInput);
             safeDeleteDirectory(tempOutputDir);
         }
     }
 
-    private void safeDelete(Path path) {
+    void executeSegmentation(Path tempInput, Path tempOutputDir, String segmentTime) throws IOException, InterruptedException {
+        List<String> command = buildFfmpegCommand(tempInput, tempOutputDir, segmentTime);
+        runFfmpeg(command);
+    }
+
+    String resolveSegmentTime() {
+        String prop = System.getProperty("SEGMENT_TIME");
+        if (prop != null && !prop.isBlank()) {
+            return prop;
+        }
+        // test-friendly hook to simulate env var
+        String propEnv = System.getProperty("SEGMENT_TIME_ENV");
+        if (propEnv != null && !propEnv.isBlank()) {
+            return propEnv;
+        }
+        String segmentTime = System.getenv("SEGMENT_TIME");
+        return (segmentTime == null || segmentTime.isBlank()) ? "30" : segmentTime;
+    }
+
+    Path createTempInputFrom(InputStream inputStream) throws IOException {
+        Path tempInput = Files.createTempFile("video-input-", ".mp4");
+        Files.copy(inputStream, tempInput, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+        return tempInput;
+    }
+
+    Path createTempOutputDir() throws IOException {
+        return Files.createTempDirectory("video-chunks-");
+    }
+
+    List<String> buildFfmpegCommand(Path tempInput, Path tempOutputDir, String segmentTime) {
+        String outputPattern = determineOutputPattern(tempOutputDir);
+        return List.of(
+                "ffmpeg",
+                "-hide_banner",
+                "-loglevel", "error",
+                "-i", tempInput.toString(),
+                "-map", "0",
+                "-c", "copy",
+                "-f", "segment",
+                "-segment_time", segmentTime,
+                "-reset_timestamps", "1",
+                outputPattern
+        );
+    }
+
+    String determineOutputPattern(Path tempOutputDir) {
+        return tempOutputDir.resolve("chunk_%03d.mp4").toString();
+    }
+
+    void runFfmpeg(List<String> command) throws IOException, InterruptedException {
+        Process process = startProcess(command);
+        consumeProcessOutput(process);
+        waitForSuccess(process, "FFmpeg");
+    }
+
+    Process startProcess(List<String> command) throws IOException {
+        ProcessBuilder pb = new ProcessBuilder(command);
+        pb.redirectErrorStream(true);
+        return pb.start();
+    }
+
+    void consumeProcessOutput(Process process) throws IOException {
+        try (InputStream is = process.getInputStream()) {
+            is.transferTo(OutputStream.nullOutputStream());
+        }
+    }
+
+    void waitForSuccess(Process process, String context) throws InterruptedException {
+        int exit = process.waitFor();
+        if (exit != 0) {
+            throw new RuntimeException("Falha ao executar " + context + " para segmentação. Código de saída: " + exit);
+        }
+    }
+
+    // Chunk helpers
+    List<Path> listChunkFiles(Path tempOutputDir) throws IOException {
+        List<Path> chunkFiles = new ArrayList<>();
+        try (var stream = Files.list(tempOutputDir)) {
+            stream.filter(Files::isRegularFile)
+                    .sorted(Comparator.comparing(Path::toString))
+                    .forEach(chunkFiles::add);
+        }
+        return chunkFiles;
+    }
+
+    private void persistAndPublishChunks(List<Path> chunkFiles, VideoInfo videoInfo) throws IOException {
+        for (int i = 0; i < chunkFiles.size(); i++) {
+            Path chunk = chunkFiles.get(i);
+            String chunkFileName = formatChunkFileName(i);
+            VideoInfo chunkInfo = buildChunkInfo(videoInfo, chunkFileName);
+
+            persistSingleChunk(chunk, chunkInfo);
+            publishChunkEvent(chunkInfo);
+        }
+    }
+
+    String formatChunkFileName(int index) {
+        return String.format("%03d.mp4", index);
+    }
+
+    VideoInfo buildChunkInfo(VideoInfo original, String chunkFileName) {
+        return new VideoInfo(
+                original.getId(),
+                original.getContainerName(),
+                original.getConnectionString(),
+                chunkFileName
+        );
+    }
+
+    void persistSingleChunk(Path chunk, VideoInfo chunkInfo) throws IOException {
+        long length = Files.size(chunk);
+        try (InputStream chunkStream = new FileInputStream(chunk.toFile())) {
+            persister.save(chunkInfo, chunkStream, length);
+        }
+    }
+
+    void publishChunkEvent(VideoInfo chunkInfo) {
+        eventGateway.publishVideoSplitted(chunkInfo);
+    }
+
+    void safeDelete(Path path) {
         if (path == null) return;
         try {
             Files.deleteIfExists(path);
@@ -108,13 +181,16 @@ public class SplitVideoUseCaseImpl implements SplitVideoUseCase {
         }
     }
 
-    private void safeDeleteDirectory(Path dir) {
+    void safeDeleteDirectory(Path dir) {
         if (dir == null) return;
         try {
             if (Files.exists(dir)) {
                 try (var walk = Files.walk(dir)) {
                     walk.sorted(Comparator.reverseOrder()).forEach(p -> {
-                        try { Files.deleteIfExists(p); } catch (IOException ignored) {}
+                        try {
+                            Files.deleteIfExists(p);
+                        } catch (IOException ignored) {
+                        }
                     });
                 }
             }
