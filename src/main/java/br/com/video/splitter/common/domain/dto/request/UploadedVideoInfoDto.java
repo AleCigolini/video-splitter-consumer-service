@@ -13,7 +13,13 @@ public class UploadedVideoInfoDto {
     @NotNull
     @JsonProperty("id_video")
     private UUID id;
-    @JsonProperty("bucket")
+    @NotBlank
     @NotNull
-    private BucketDto bucketDto;
+    private final String containerName;
+    @NotBlank
+    @NotNull
+    private final String connectionString;
+    @NotBlank
+    @NotNull
+    private final String fileName;
 }

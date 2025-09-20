@@ -23,9 +23,9 @@ public class RequestVideoInfoMapperImpl implements RequestVideoInfoMapper {
                 UploadedVideoInfoDto src = context.getSource();
                 return new VideoInfo(
                         src.getId(),
-                        src.getBucketDto().getContainerName(),
-                        src.getBucketDto().getConnectionString(),
-                        src.getBucketDto().getFileName()
+                        src.getContainerName(),
+                        src.getConnectionString(),
+                        src.getFileName()
                 );
             }
         };
