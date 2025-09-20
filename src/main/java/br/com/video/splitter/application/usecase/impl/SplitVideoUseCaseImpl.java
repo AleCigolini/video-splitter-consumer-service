@@ -63,7 +63,6 @@ public class SplitVideoUseCaseImpl implements SplitVideoUseCase {
         if (prop != null && !prop.isBlank()) {
             return prop;
         }
-        // test-friendly hook to simulate env var
         String propEnv = System.getProperty("SEGMENT_TIME_ENV");
         if (propEnv != null && !propEnv.isBlank()) {
             return propEnv;
@@ -73,7 +72,18 @@ public class SplitVideoUseCaseImpl implements SplitVideoUseCase {
     }
 
     Path createTempInputFrom(InputStream inputStream) throws IOException {
-        Path tempInput = Files.createTempFile("video-input-", ".mp4");
+        Path tempInput;
+        String tmpDir = System.getProperty("java.io.tmpdir");
+        try {
+            tempInput = Files.createTempFile(Path.of(tmpDir), "video-input-", ".mp4");
+        } catch (Exception e) {
+            tempInput = Files.createTempFile("video-input-", ".mp4");
+        }
+        try {
+            var perms = java.nio.file.attribute.PosixFilePermissions.fromString("rw-------");
+            Files.setPosixFilePermissions(tempInput, perms);
+        } catch (UnsupportedOperationException ignored) {
+        }
         Files.copy(inputStream, tempInput, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
         return tempInput;
     }
