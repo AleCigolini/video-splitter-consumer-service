@@ -11,6 +11,7 @@ permissions:
 jobs:
   kubernetes:
     name: Deploy Application on Kubernetes
+    environment: dev
     runs-on: ubuntu-latest
 
     steps:
