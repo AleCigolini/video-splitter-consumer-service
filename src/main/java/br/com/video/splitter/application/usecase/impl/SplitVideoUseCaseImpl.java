@@ -63,7 +63,6 @@ public class SplitVideoUseCaseImpl implements SplitVideoUseCase {
         if (prop != null && !prop.isBlank()) {
             return prop;
         }
-        // test-friendly hook to simulate env var
         String propEnv = System.getProperty("SEGMENT_TIME_ENV");
         if (propEnv != null && !propEnv.isBlank()) {
             return propEnv;
@@ -73,13 +72,36 @@ public class SplitVideoUseCaseImpl implements SplitVideoUseCase {
     }
 
     Path createTempInputFrom(InputStream inputStream) throws IOException {
-        Path tempInput = Files.createTempFile("video-input-", ".mp4");
+        Path tempInput;
+        String tmpDir = System.getProperty("java.io.tmpdir");
+        try {
+            tempInput = Files.createTempFile(Path.of(tmpDir), "video-input-", ".mp4");
+        } catch (Exception e) {
+            tempInput = Files.createTempFile("video-input-", ".mp4");
+        }
+        try {
+            var perms = java.nio.file.attribute.PosixFilePermissions.fromString("rw-------");
+            Files.setPosixFilePermissions(tempInput, perms);
+        } catch (UnsupportedOperationException ignored) {
+        }
         Files.copy(inputStream, tempInput, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
         return tempInput;
     }
 
     Path createTempOutputDir() throws IOException {
-        return Files.createTempDirectory("video-chunks-");
+        Path tempDir;
+        String tmpDir = System.getProperty("java.io.tmpdir");
+        try {
+            tempDir = Files.createTempDirectory(Path.of(tmpDir), "video-chunks-");
+        } catch (Exception e) {
+            tempDir = Files.createTempDirectory("video-chunks-");
+        }
+        try {
+            var perms = java.nio.file.attribute.PosixFilePermissions.fromString("rwx------");
+            Files.setPosixFilePermissions(tempDir, perms);
+        } catch (UnsupportedOperationException ignored) {
+        }
+        return tempDir;
     }
 
     List<String> buildFfmpegCommand(Path tempInput, Path tempOutputDir, String segmentTime) {
