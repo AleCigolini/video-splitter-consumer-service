@@ -488,4 +488,101 @@ class SplitVideoUseCaseImplTest {
             useCase.safeDeleteDirectory(dir);
         }
     }
+
+    @Test
+    @EnabledOnOs(OS.LINUX)
+    void createTempInputFrom_onLinux_shouldFallbackWhenAttrBuilderThrows() throws Exception {
+        SplitVideoUseCaseImpl spyUseCase = Mockito.spy(new SplitVideoUseCaseImpl(persister, eventGateway));
+        doThrow(new UnsupportedOperationException("attr builder UOE")).when(spyUseCase).buildFilePosixAttr();
+        byte[] data = {7,7,7};
+        Path temp = spyUseCase.createTempInputFrom(new ByteArrayInputStream(data));
+        try {
+            assertTrue(Files.exists(temp));
+            assertArrayEquals(data, Files.readAllBytes(temp));
+        } finally {
+            spyUseCase.safeDelete(temp);
+        }
+    }
+
+    @Test
+    @EnabledOnOs(OS.LINUX)
+    void createTempInputFrom_onLinux_shouldFallbackWhenCreateWithAttrThrows() throws Exception {
+        SplitVideoUseCaseImpl spyUseCase = Mockito.spy(new SplitVideoUseCaseImpl(persister, eventGateway));
+        doThrow(new UnsupportedOperationException("create with attr UOE")).when(spyUseCase)
+                .createTempFileWithAttr(any(), anyString(), anyString(), any());
+        byte[] data = {8,8,8};
+        Path temp = spyUseCase.createTempInputFrom(new ByteArrayInputStream(data));
+        try {
+            assertTrue(Files.exists(temp));
+            assertArrayEquals(data, Files.readAllBytes(temp));
+        } finally {
+            spyUseCase.safeDelete(temp);
+        }
+    }
+
+    @Test
+    @EnabledOnOs(OS.LINUX)
+    void createTempInputFrom_onLinux_shouldFallbackToFileFlagsWhenPosixSetThrows() throws Exception {
+        SplitVideoUseCaseImpl spyUseCase = Mockito.spy(new SplitVideoUseCaseImpl(persister, eventGateway));
+        doThrow(new UnsupportedOperationException("attr builder UOE")).when(spyUseCase).buildFilePosixAttr();
+        doThrow(new UnsupportedOperationException("apply posix UOE")).when(spyUseCase)
+                .applyPosixPermissions(any(Path.class), anyString());
+        byte[] data = {9,9,9};
+        Path temp = spyUseCase.createTempInputFrom(new ByteArrayInputStream(data));
+        try {
+            assertTrue(Files.exists(temp));
+            assertArrayEquals(data, Files.readAllBytes(temp));
+            File f = temp.toFile();
+            assertTrue(f.canRead() || f.canWrite());
+        } finally {
+            spyUseCase.safeDelete(temp);
+        }
+    }
+
+    @Test
+    @EnabledOnOs(OS.LINUX)
+    void createTempOutputDir_onLinux_shouldFallbackWhenAttrBuilderThrows() throws Exception {
+        SplitVideoUseCaseImpl spyUseCase = Mockito.spy(new SplitVideoUseCaseImpl(persister, eventGateway));
+        doThrow(new UnsupportedOperationException("dir attr builder UOE")).when(spyUseCase).buildDirPosixAttr();
+        Path dir = spyUseCase.createTempOutputDir();
+        try {
+            assertTrue(Files.exists(dir));
+            assertTrue(Files.isDirectory(dir));
+        } finally {
+            spyUseCase.safeDeleteDirectory(dir);
+        }
+    }
+
+    @Test
+    @EnabledOnOs(OS.LINUX)
+    void createTempOutputDir_onLinux_shouldFallbackWhenCreateWithAttrThrows() throws Exception {
+        SplitVideoUseCaseImpl spyUseCase = Mockito.spy(new SplitVideoUseCaseImpl(persister, eventGateway));
+        doThrow(new UnsupportedOperationException("create dir with attr UOE")).when(spyUseCase)
+                .createTempDirectoryWithAttr(any(), anyString(), any());
+        Path dir = spyUseCase.createTempOutputDir();
+        try {
+            assertTrue(Files.exists(dir));
+            assertTrue(Files.isDirectory(dir));
+        } finally {
+            spyUseCase.safeDeleteDirectory(dir);
+        }
+    }
+
+    @Test
+    @EnabledOnOs(OS.LINUX)
+    void createTempOutputDir_onLinux_shouldFallbackToFileFlagsWhenPosixSetThrows() throws Exception {
+        SplitVideoUseCaseImpl spyUseCase = Mockito.spy(new SplitVideoUseCaseImpl(persister, eventGateway));
+        doThrow(new UnsupportedOperationException("dir attr builder UOE")).when(spyUseCase).buildDirPosixAttr();
+        doThrow(new UnsupportedOperationException("apply dir posix UOE")).when(spyUseCase)
+                .applyPosixPermissions(any(Path.class), anyString());
+        Path dir = spyUseCase.createTempOutputDir();
+        try {
+            assertTrue(Files.exists(dir));
+            assertTrue(Files.isDirectory(dir));
+            File f = dir.toFile();
+            assertTrue(f.canRead() || f.canWrite() || f.canExecute());
+        } finally {
+            spyUseCase.safeDeleteDirectory(dir);
+        }
+    }
 }

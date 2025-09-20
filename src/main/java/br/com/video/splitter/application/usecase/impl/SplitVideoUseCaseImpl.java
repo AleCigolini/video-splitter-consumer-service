@@ -84,12 +84,10 @@ public class SplitVideoUseCaseImpl implements SplitVideoUseCase {
         }
         try {
             if (isUnix()) {
-                FileAttribute<Set<PosixFilePermission>> attr = PosixFilePermissions.asFileAttribute(
-                        PosixFilePermissions.fromString("rw-------")
-                );
+                FileAttribute<Set<PosixFilePermission>> attr = buildFilePosixAttr();
                 tempInput = (baseDir != null)
-                        ? Files.createTempFile(baseDir, "video-input-", ".mp4", attr)
-                        : Files.createTempFile("video-input-", ".mp4", attr);
+                        ? createTempFileWithAttr(baseDir, "video-input-", ".mp4", attr)
+                        : createTempFileWithAttr(null, "video-input-", ".mp4", attr);
             } else {
                 tempInput = (baseDir != null)
                         ? Files.createTempFile(baseDir, "video-input-", ".mp4")
@@ -104,8 +102,7 @@ public class SplitVideoUseCaseImpl implements SplitVideoUseCase {
                     ? Files.createTempFile(baseDir, "video-input-", ".mp4")
                     : Files.createTempFile("video-input-", ".mp4");
             try {
-                var perms = PosixFilePermissions.fromString("rw-------");
-                Files.setPosixFilePermissions(tempInput, perms);
+                applyPosixPermissions(tempInput, "rw-------");
             } catch (UnsupportedOperationException ignored) {
                 File f = tempInput.toFile();
                 f.setReadable(true, true);
@@ -127,12 +124,10 @@ public class SplitVideoUseCaseImpl implements SplitVideoUseCase {
         }
         try {
             if (isUnix()) {
-                FileAttribute<Set<PosixFilePermission>> attr = PosixFilePermissions.asFileAttribute(
-                        PosixFilePermissions.fromString("rwx------")
-                );
+                FileAttribute<Set<PosixFilePermission>> attr = buildDirPosixAttr();
                 tempDir = (baseDir != null)
-                        ? Files.createTempDirectory(baseDir, "video-chunks-", attr)
-                        : Files.createTempDirectory("video-chunks-", attr);
+                        ? createTempDirectoryWithAttr(baseDir, "video-chunks-", attr)
+                        : createTempDirectoryWithAttr(null, "video-chunks-", attr);
             } else {
                 tempDir = (baseDir != null)
                         ? Files.createTempDirectory(baseDir, "video-chunks-")
@@ -147,8 +142,7 @@ public class SplitVideoUseCaseImpl implements SplitVideoUseCase {
                     ? Files.createTempDirectory(baseDir, "video-chunks-")
                     : Files.createTempDirectory("video-chunks-");
             try {
-                var perms = PosixFilePermissions.fromString("rwx------");
-                Files.setPosixFilePermissions(tempDir, perms);
+                applyPosixPermissions(tempDir, "rwx------");
             } catch (UnsupportedOperationException ignored) {
                 File f = tempDir.toFile();
                 f.setReadable(true, true);
@@ -276,5 +270,26 @@ public class SplitVideoUseCaseImpl implements SplitVideoUseCase {
     boolean isUnix() {
         String os = System.getProperty("os.name").toLowerCase();
         return os.contains("nix") || os.contains("nux") || os.contains("mac") || os.contains("aix") || os.contains("sunos");
+    }
+
+    FileAttribute<Set<PosixFilePermission>> buildFilePosixAttr() {
+        return PosixFilePermissions.asFileAttribute(PosixFilePermissions.fromString("rw-------"));
+    }
+
+    FileAttribute<Set<PosixFilePermission>> buildDirPosixAttr() {
+        return PosixFilePermissions.asFileAttribute(PosixFilePermissions.fromString("rwx------"));
+    }
+
+    Path createTempFileWithAttr(Path baseDir, String prefix, String suffix, FileAttribute<Set<PosixFilePermission>> attr) throws IOException {
+        return baseDir != null ? Files.createTempFile(baseDir, prefix, suffix, attr) : Files.createTempFile(prefix, suffix, attr);
+    }
+
+    Path createTempDirectoryWithAttr(Path baseDir, String prefix, FileAttribute<Set<PosixFilePermission>> attr) throws IOException {
+        return baseDir != null ? Files.createTempDirectory(baseDir, prefix, attr) : Files.createTempDirectory(prefix, attr);
+    }
+
+    void applyPosixPermissions(Path path, String mode) throws IOException {
+        var perms = PosixFilePermissions.fromString(mode);
+        Files.setPosixFilePermissions(path, perms);
     }
 }
