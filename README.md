@@ -1,1 +1,1 @@
-# video-splitter-consumer-service
+![image](https://github.com/user-attachments/assets/c8996715-f174-4611-ab40-7c1d5ba35877)
