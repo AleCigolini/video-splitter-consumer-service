@@ -7,12 +7,15 @@ import br.com.video.splitter.domain.VideoInfo;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.FileAttribute;
+
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -72,34 +75,42 @@ public class SplitVideoUseCaseImpl implements SplitVideoUseCase {
     }
 
     Path createTempInputFrom(InputStream inputStream) throws IOException {
-        Path tempInput;
         String tmpDir = System.getProperty("java.io.tmpdir");
-        try {
-            tempInput = Files.createTempFile(Path.of(tmpDir), "video-input-", ".mp4");
-        } catch (Exception e) {
-            tempInput = Files.createTempFile("video-input-", ".mp4");
-        }
-        try {
-            var perms = java.nio.file.attribute.PosixFilePermissions.fromString("rw-------");
-            Files.setPosixFilePermissions(tempInput, perms);
-        } catch (UnsupportedOperationException ignored) {
+        File baseDir = new File(tmpDir);
+        Path tempInput;
+        if (System.getProperty("os.name").toLowerCase().contains("nix") ||
+            System.getProperty("os.name").toLowerCase().contains("nux") ||
+            System.getProperty("os.name").toLowerCase().contains("mac")) {
+            java.nio.file.attribute.FileAttribute<?> attr = java.nio.file.attribute.PosixFilePermissions.asFileAttribute(
+                    java.nio.file.attribute.PosixFilePermissions.fromString("rw-------"));
+            tempInput = Files.createTempFile(baseDir.toPath(), "video-input-", ".mp4", attr);
+        } else {
+            tempInput = Files.createTempFile(baseDir.toPath(), "video-input-", ".mp4");
+            File f = tempInput.toFile();
+            f.setReadable(true, true);
+            f.setWritable(true, true);
+            f.setExecutable(false, true);
         }
         Files.copy(inputStream, tempInput, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
         return tempInput;
     }
 
     Path createTempOutputDir() throws IOException {
-        Path tempDir;
         String tmpDir = System.getProperty("java.io.tmpdir");
-        try {
-            tempDir = Files.createTempDirectory(Path.of(tmpDir), "video-chunks-");
-        } catch (Exception e) {
-            tempDir = Files.createTempDirectory("video-chunks-");
-        }
-        try {
-            var perms = java.nio.file.attribute.PosixFilePermissions.fromString("rwx------");
-            Files.setPosixFilePermissions(tempDir, perms);
-        } catch (UnsupportedOperationException ignored) {
+        File baseDir = new File(tmpDir);
+        Path tempDir;
+        if (System.getProperty("os.name").toLowerCase().contains("nix") ||
+            System.getProperty("os.name").toLowerCase().contains("nux") ||
+            System.getProperty("os.name").toLowerCase().contains("mac")) {
+            FileAttribute<?> attr = java.nio.file.attribute.PosixFilePermissions.asFileAttribute(
+                    java.nio.file.attribute.PosixFilePermissions.fromString("rwx------"));
+            tempDir = Files.createTempDirectory(baseDir.toPath(), "video-chunks-", attr);
+        } else {
+            tempDir = Files.createTempDirectory(baseDir.toPath(), "video-chunks-");
+            File f = tempDir.toFile();
+            f.setReadable(true, true);
+            f.setWritable(true, true);
+            f.setExecutable(true, true);
         }
         return tempDir;
     }
