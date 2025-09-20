@@ -6,6 +6,8 @@ import br.com.video.splitter.domain.VideoInfo;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Assumptions;
+import org.junit.jupiter.api.condition.EnabledOnOs;
+import org.junit.jupiter.api.condition.OS;
 import org.mockito.Mockito;
 
 import java.io.*;
@@ -447,5 +449,43 @@ class SplitVideoUseCaseImplTest {
         assertTrue(Files.exists(temp));
         assertTrue(Files.isDirectory(temp));
         Files.deleteIfExists(temp);
+    }
+
+    @Test
+    @EnabledOnOs(OS.LINUX)
+    void createTempInputFrom_onLinux_shouldCreateFileWithOwnerRW() throws Exception {
+        byte[] data = new byte[]{1, 2, 3, 4};
+        Path temp = useCase.createTempInputFrom(new ByteArrayInputStream(data));
+        try {
+            assertTrue(Files.exists(temp));
+            assertArrayEquals(data, Files.readAllBytes(temp));
+            try {
+                Set<PosixFilePermission> perms = Files.getPosixFilePermissions(temp);
+                assertTrue(perms.contains(PosixFilePermission.OWNER_READ));
+                assertTrue(perms.contains(PosixFilePermission.OWNER_WRITE));
+            } catch (UnsupportedOperationException ignored) {
+            }
+        } finally {
+            useCase.safeDelete(temp);
+        }
+    }
+
+    @Test
+    @EnabledOnOs(OS.LINUX)
+    void createTempOutputDir_onLinux_shouldCreateDirWithOwnerRWX() throws Exception {
+        Path dir = useCase.createTempOutputDir();
+        try {
+            assertTrue(Files.exists(dir));
+            assertTrue(Files.isDirectory(dir));
+            try {
+                Set<PosixFilePermission> perms = Files.getPosixFilePermissions(dir);
+                assertTrue(perms.contains(PosixFilePermission.OWNER_READ));
+                assertTrue(perms.contains(PosixFilePermission.OWNER_WRITE));
+                assertTrue(perms.contains(PosixFilePermission.OWNER_EXECUTE));
+            } catch (UnsupportedOperationException ignored) {
+            }
+        } finally {
+            useCase.safeDeleteDirectory(dir);
+        }
     }
 }
