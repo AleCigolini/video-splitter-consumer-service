@@ -40,7 +40,7 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: |
           mvn -B verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar \
-            -Dsonar.projectKey=AleCigolini_video_splitter_consumer_service \
+            -Dsonar.projectKey=AleCigolini_video-splitter-consumer-service \
             -Dsonar.organization=hackaton-fiap \
             -Dsonar.host.url=https://sonarcloud.io \
             -Dsonar.coverage.jacoco.xmlReportPaths=target/app/jacoco/jacoco.xml \
