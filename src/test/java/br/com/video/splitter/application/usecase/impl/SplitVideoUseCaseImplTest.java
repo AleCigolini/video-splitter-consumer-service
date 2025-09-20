@@ -10,7 +10,9 @@ import org.mockito.Mockito;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.PosixFilePermission;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -249,7 +251,23 @@ class SplitVideoUseCaseImplTest {
         assertTrue(Files.exists(temp));
         byte[] read = Files.readAllBytes(temp);
         assertArrayEquals(data, read);
-        useCase.safeDelete(temp);
+        File f = temp.toFile();
+        try {
+            Set<PosixFilePermission> perms = Files.getFileAttributeView(temp, java.nio.file.attribute.PosixFileAttributeView.class) != null
+                    ? Files.getPosixFilePermissions(temp)
+                    : null;
+            if (perms != null) {
+                assertTrue(perms.contains(PosixFilePermission.OWNER_READ));
+                assertTrue(perms.contains(PosixFilePermission.OWNER_WRITE));
+            } else {
+                assertTrue(f.canRead());
+                assertTrue(f.canWrite());
+            }
+        } catch (UnsupportedOperationException ignored) {
+            assertTrue(f.canRead() || f.canWrite());
+        } finally {
+            useCase.safeDelete(temp);
+        }
     }
 
     @Test
@@ -257,7 +275,25 @@ class SplitVideoUseCaseImplTest {
         Path dir = useCase.createTempOutputDir();
         assertTrue(Files.exists(dir));
         assertTrue(Files.isDirectory(dir));
-        useCase.safeDeleteDirectory(dir);
+        File f = dir.toFile();
+        try {
+            Set<PosixFilePermission> perms = Files.getFileAttributeView(dir, java.nio.file.attribute.PosixFileAttributeView.class) != null
+                    ? Files.getPosixFilePermissions(dir)
+                    : null;
+            if (perms != null) {
+                assertTrue(perms.contains(PosixFilePermission.OWNER_READ));
+                assertTrue(perms.contains(PosixFilePermission.OWNER_WRITE));
+                assertTrue(perms.contains(PosixFilePermission.OWNER_EXECUTE));
+            } else {
+                assertTrue(f.canRead());
+                assertTrue(f.canWrite());
+                assertTrue(f.canExecute());
+            }
+        } catch (UnsupportedOperationException ignored) {
+            assertTrue(f.canRead() || f.canWrite() || f.canExecute());
+        } finally {
+            useCase.safeDeleteDirectory(dir);
+        }
     }
 
     @Test
@@ -311,7 +347,6 @@ class SplitVideoUseCaseImplTest {
         InputStream lock = new FileInputStream(f.toFile());
         try {
             useCase.safeDelete(f);
-            // Aceita ambos comportamentos: arquivo pode ou não ser deletado, mas não deve lançar exceção
             assertTrue(Files.exists(f) || !Files.exists(f));
         } finally {
             lock.close();
@@ -373,7 +408,6 @@ class SplitVideoUseCaseImplTest {
             @Override
             public Path createTempInputFrom(InputStream inputStream) throws IOException {
                 Path tempInput = Files.createTempFile("video-input-", ".mp4");
-                // Simula UnsupportedOperationException
                 try {
                     throw new UnsupportedOperationException();
                 } catch (UnsupportedOperationException ignored) {
