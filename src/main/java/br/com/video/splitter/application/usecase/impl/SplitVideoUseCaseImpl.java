@@ -7,15 +7,20 @@ import br.com.video.splitter.domain.VideoInfo;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.FileAttribute;
+import java.nio.file.attribute.PosixFilePermission;
+import java.nio.file.attribute.PosixFilePermissions;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
 
 @ApplicationScoped
 public class SplitVideoUseCaseImpl implements SplitVideoUseCase {
@@ -37,9 +42,7 @@ public class SplitVideoUseCaseImpl implements SplitVideoUseCase {
         try {
             tempInput = createTempInputFrom(inputStream);
             tempOutputDir = createTempOutputDir();
-
             executeSegmentation(tempInput, tempOutputDir, segmentTime);
-
             List<Path> chunkFiles = listChunkFiles(tempOutputDir);
             persistAndPublishChunks(chunkFiles, videoInfo);
         } catch (IOException e) {
@@ -74,15 +77,41 @@ public class SplitVideoUseCaseImpl implements SplitVideoUseCase {
     Path createTempInputFrom(InputStream inputStream) throws IOException {
         Path tempInput;
         String tmpDir = System.getProperty("java.io.tmpdir");
+        Path baseDir = null;
         try {
-            tempInput = Files.createTempFile(Path.of(tmpDir), "video-input-", ".mp4");
-        } catch (Exception e) {
-            tempInput = Files.createTempFile("video-input-", ".mp4");
+            baseDir = Path.of(tmpDir);
+        } catch (Exception ignored) {
         }
         try {
-            var perms = java.nio.file.attribute.PosixFilePermissions.fromString("rw-------");
-            Files.setPosixFilePermissions(tempInput, perms);
-        } catch (UnsupportedOperationException ignored) {
+            if (isUnix()) {
+                FileAttribute<Set<PosixFilePermission>> attr = PosixFilePermissions.asFileAttribute(
+                        PosixFilePermissions.fromString("rw-------")
+                );
+                tempInput = (baseDir != null)
+                        ? Files.createTempFile(baseDir, "video-input-", ".mp4", attr)
+                        : Files.createTempFile("video-input-", ".mp4", attr);
+            } else {
+                tempInput = (baseDir != null)
+                        ? Files.createTempFile(baseDir, "video-input-", ".mp4")
+                        : Files.createTempFile("video-input-", ".mp4");
+                File f = tempInput.toFile();
+                f.setReadable(true, true);
+                f.setWritable(true, true);
+                f.setExecutable(true, true);
+            }
+        } catch (UnsupportedOperationException e) {
+            tempInput = (baseDir != null)
+                    ? Files.createTempFile(baseDir, "video-input-", ".mp4")
+                    : Files.createTempFile("video-input-", ".mp4");
+            try {
+                var perms = PosixFilePermissions.fromString("rw-------");
+                Files.setPosixFilePermissions(tempInput, perms);
+            } catch (UnsupportedOperationException ignored) {
+                File f = tempInput.toFile();
+                f.setReadable(true, true);
+                f.setWritable(true, true);
+                f.setExecutable(true, true);
+            }
         }
         Files.copy(inputStream, tempInput, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
         return tempInput;
@@ -91,15 +120,41 @@ public class SplitVideoUseCaseImpl implements SplitVideoUseCase {
     Path createTempOutputDir() throws IOException {
         Path tempDir;
         String tmpDir = System.getProperty("java.io.tmpdir");
+        Path baseDir = null;
         try {
-            tempDir = Files.createTempDirectory(Path.of(tmpDir), "video-chunks-");
-        } catch (Exception e) {
-            tempDir = Files.createTempDirectory("video-chunks-");
+            baseDir = Path.of(tmpDir);
+        } catch (Exception ignored) {
         }
         try {
-            var perms = java.nio.file.attribute.PosixFilePermissions.fromString("rwx------");
-            Files.setPosixFilePermissions(tempDir, perms);
-        } catch (UnsupportedOperationException ignored) {
+            if (isUnix()) {
+                FileAttribute<Set<PosixFilePermission>> attr = PosixFilePermissions.asFileAttribute(
+                        PosixFilePermissions.fromString("rwx------")
+                );
+                tempDir = (baseDir != null)
+                        ? Files.createTempDirectory(baseDir, "video-chunks-", attr)
+                        : Files.createTempDirectory("video-chunks-", attr);
+            } else {
+                tempDir = (baseDir != null)
+                        ? Files.createTempDirectory(baseDir, "video-chunks-")
+                        : Files.createTempDirectory("video-chunks-");
+                File f = tempDir.toFile();
+                f.setReadable(true, true);
+                f.setWritable(true, true);
+                f.setExecutable(true, true);
+            }
+        } catch (UnsupportedOperationException e) {
+            tempDir = (baseDir != null)
+                    ? Files.createTempDirectory(baseDir, "video-chunks-")
+                    : Files.createTempDirectory("video-chunks-");
+            try {
+                var perms = PosixFilePermissions.fromString("rwx------");
+                Files.setPosixFilePermissions(tempDir, perms);
+            } catch (UnsupportedOperationException ignored) {
+                File f = tempDir.toFile();
+                f.setReadable(true, true);
+                f.setWritable(true, true);
+                f.setExecutable(true, true);
+            }
         }
         return tempDir;
     }
@@ -149,7 +204,6 @@ public class SplitVideoUseCaseImpl implements SplitVideoUseCase {
         }
     }
 
-    // Chunk helpers
     List<Path> listChunkFiles(Path tempOutputDir) throws IOException {
         List<Path> chunkFiles = new ArrayList<>();
         try (var stream = Files.list(tempOutputDir)) {
@@ -165,7 +219,6 @@ public class SplitVideoUseCaseImpl implements SplitVideoUseCase {
             Path chunk = chunkFiles.get(i);
             String chunkFileName = formatChunkFileName(i);
             VideoInfo chunkInfo = buildChunkInfo(videoInfo, chunkFileName);
-
             persistSingleChunk(chunk, chunkInfo);
             publishChunkEvent(chunkInfo);
         }
@@ -218,5 +271,10 @@ public class SplitVideoUseCaseImpl implements SplitVideoUseCase {
             }
         } catch (IOException ignored) {
         }
+    }
+
+    boolean isUnix() {
+        String os = System.getProperty("os.name").toLowerCase();
+        return os.contains("nix") || os.contains("nux") || os.contains("mac") || os.contains("aix") || os.contains("sunos");
     }
 }
