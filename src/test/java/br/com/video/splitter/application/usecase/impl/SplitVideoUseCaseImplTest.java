@@ -262,7 +262,13 @@ class SplitVideoUseCaseImplTest {
 
     @Test
     void startProcess_shouldStartEchoCrossPlatform() throws Exception {
-        List<String> cmd = List.of("echo", "ok");
+        List<String> cmd;
+        String os = System.getProperty("os.name").toLowerCase();
+        if (os.contains("win")) {
+            cmd = List.of("cmd.exe", "/c", "echo", "ok");
+        } else {
+            cmd = List.of("echo", "ok");
+        }
         Process p = useCase.startProcess(cmd);
         int exit = p.waitFor();
         assertEquals(0, exit);
@@ -347,6 +353,21 @@ class SplitVideoUseCaseImplTest {
     }
 
     @Test
+    void createTempOutputDir_shouldFallbackToDefaultWhenTmpDirFails() throws Exception {
+        String originalTmp = System.getProperty("java.io.tmpdir");
+        System.setProperty("java.io.tmpdir", "?invalid_path");
+        try {
+            Path temp = new SplitVideoUseCaseImpl(persister, eventGateway).createTempOutputDir();
+            assertTrue(Files.exists(temp));
+            assertTrue(Files.isDirectory(temp));
+            Files.deleteIfExists(temp);
+        } finally {
+            if (originalTmp != null) System.setProperty("java.io.tmpdir", originalTmp);
+            else System.clearProperty("java.io.tmpdir");
+        }
+    }
+
+    @Test
     void createTempInputFrom_shouldHandleUnsupportedPosixPermissions() throws Exception {
         SplitVideoUseCaseImpl useCase = new SplitVideoUseCaseImpl(persister, eventGateway) {
             @Override
@@ -365,6 +386,25 @@ class SplitVideoUseCaseImplTest {
         Path temp = useCase.createTempInputFrom(new ByteArrayInputStream(data));
         assertTrue(Files.exists(temp));
         assertArrayEquals(data, Files.readAllBytes(temp));
+        Files.deleteIfExists(temp);
+    }
+
+    @Test
+    void createTempOutputDir_shouldHandleUnsupportedPosixPermissions() throws Exception {
+        SplitVideoUseCaseImpl useCase = new SplitVideoUseCaseImpl(persister, eventGateway) {
+            @Override
+            public Path createTempOutputDir() throws IOException {
+                Path tempDir = Files.createTempDirectory("video-chunks-");
+                try {
+                    throw new UnsupportedOperationException();
+                } catch (UnsupportedOperationException ignored) {
+                }
+                return tempDir;
+            }
+        };
+        Path temp = useCase.createTempOutputDir();
+        assertTrue(Files.exists(temp));
+        assertTrue(Files.isDirectory(temp));
         Files.deleteIfExists(temp);
     }
 }

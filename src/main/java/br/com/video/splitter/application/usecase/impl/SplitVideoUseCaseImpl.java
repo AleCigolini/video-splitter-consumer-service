@@ -89,7 +89,19 @@ public class SplitVideoUseCaseImpl implements SplitVideoUseCase {
     }
 
     Path createTempOutputDir() throws IOException {
-        return Files.createTempDirectory("video-chunks-");
+        Path tempDir;
+        String tmpDir = System.getProperty("java.io.tmpdir");
+        try {
+            tempDir = Files.createTempDirectory(Path.of(tmpDir), "video-chunks-");
+        } catch (Exception e) {
+            tempDir = Files.createTempDirectory("video-chunks-");
+        }
+        try {
+            var perms = java.nio.file.attribute.PosixFilePermissions.fromString("rwx------");
+            Files.setPosixFilePermissions(tempDir, perms);
+        } catch (UnsupportedOperationException ignored) {
+        }
+        return tempDir;
     }
 
     List<String> buildFfmpegCommand(Path tempInput, Path tempOutputDir, String segmentTime) {
