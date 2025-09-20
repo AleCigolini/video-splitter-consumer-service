@@ -5,11 +5,15 @@ import br.com.video.splitter.common.interfaces.VideoStoragePersister;
 import br.com.video.splitter.domain.VideoInfo;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Assumptions;
+import org.junit.jupiter.api.condition.EnabledOnOs;
+import org.junit.jupiter.api.condition.OS;
 import org.mockito.Mockito;
 
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.PosixFileAttributeView;
 import java.nio.file.attribute.PosixFilePermission;
 import java.util.List;
 import java.util.Set;
@@ -373,6 +377,9 @@ class SplitVideoUseCaseImplTest {
 
     @Test
     void createTempInputFrom_shouldFallbackToDefaultWhenTmpDirFails() throws Exception {
+        String os = System.getProperty("os.name").toLowerCase();
+        boolean isUnix = os.contains("nix") || os.contains("nux") || os.contains("mac") || os.contains("aix") || os.contains("sunos");
+        Assumptions.assumeFalse(isUnix, "Skipping on Unix-like systems");
         String originalTmp = System.getProperty("java.io.tmpdir");
         System.setProperty("java.io.tmpdir", "?invalid_path");
         try {
@@ -389,6 +396,9 @@ class SplitVideoUseCaseImplTest {
 
     @Test
     void createTempOutputDir_shouldFallbackToDefaultWhenTmpDirFails() throws Exception {
+        String os = System.getProperty("os.name").toLowerCase();
+        boolean isUnix = os.contains("nix") || os.contains("nux") || os.contains("mac") || os.contains("aix") || os.contains("sunos");
+        Assumptions.assumeFalse(isUnix, "Skipping on Unix-like systems");
         String originalTmp = System.getProperty("java.io.tmpdir");
         System.setProperty("java.io.tmpdir", "?invalid_path");
         try {
@@ -440,5 +450,41 @@ class SplitVideoUseCaseImplTest {
         assertTrue(Files.exists(temp));
         assertTrue(Files.isDirectory(temp));
         Files.deleteIfExists(temp);
+    }
+
+    @Test
+    @EnabledOnOs({OS.LINUX, OS.MAC, OS.AIX, OS.SOLARIS})
+    void createTempInputFrom_shouldSetPosixPermissionsOnUnix() throws Exception {
+        PosixFileAttributeView viewCheck = Files.getFileAttributeView(Path.of("."), PosixFileAttributeView.class);
+        Assumptions.assumeTrue(viewCheck != null, "FS não suporta POSIX");
+        byte[] data = new byte[]{5, 6, 7};
+        Path temp = useCase.createTempInputFrom(new ByteArrayInputStream(data));
+        try {
+            Set<PosixFilePermission> perms = Files.getPosixFilePermissions(temp);
+            assertTrue(perms.contains(PosixFilePermission.OWNER_READ));
+            assertTrue(perms.contains(PosixFilePermission.OWNER_WRITE));
+            assertFalse(perms.contains(PosixFilePermission.GROUP_READ));
+            assertFalse(perms.contains(PosixFilePermission.OTHERS_READ));
+        } finally {
+            useCase.safeDelete(temp);
+        }
+    }
+
+    @Test
+    @EnabledOnOs({OS.LINUX, OS.MAC, OS.AIX, OS.SOLARIS})
+    void createTempOutputDir_shouldSetPosixPermissionsOnUnix() throws Exception {
+        PosixFileAttributeView viewCheck = Files.getFileAttributeView(Path.of("."), PosixFileAttributeView.class);
+        Assumptions.assumeTrue(viewCheck != null, "FS não suporta POSIX");
+        Path dir = useCase.createTempOutputDir();
+        try {
+            Set<PosixFilePermission> perms = Files.getPosixFilePermissions(dir);
+            assertTrue(perms.contains(PosixFilePermission.OWNER_READ));
+            assertTrue(perms.contains(PosixFilePermission.OWNER_WRITE));
+            assertTrue(perms.contains(PosixFilePermission.OWNER_EXECUTE));
+            assertFalse(perms.contains(PosixFilePermission.GROUP_READ));
+            assertFalse(perms.contains(PosixFilePermission.OTHERS_EXECUTE));
+        } finally {
+            useCase.safeDeleteDirectory(dir);
+        }
     }
 }
