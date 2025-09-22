@@ -7,11 +7,7 @@ import br.com.video.splitter.domain.VideoInfo;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileAttribute;
@@ -83,20 +79,11 @@ public class SplitVideoUseCaseImpl implements SplitVideoUseCase {
         } catch (Exception ignored) {
         }
         try {
-            if (isUnix()) {
-                FileAttribute<Set<PosixFilePermission>> attr = buildFilePosixAttr();
-                tempInput = (baseDir != null)
-                        ? createTempFileWithAttr(baseDir, "video-input-", ".mp4", attr)
-                        : createTempFileWithAttr(null, "video-input-", ".mp4", attr);
-            } else {
-                tempInput = (baseDir != null)
-                        ? Files.createTempFile(baseDir, "video-input-", ".mp4")
-                        : Files.createTempFile("video-input-", ".mp4");
-                File f = tempInput.toFile();
-                f.setReadable(true, true);
-                f.setWritable(true, true);
-                f.setExecutable(true, true);
-            }
+            FileAttribute<Set<PosixFilePermission>> attr = buildFilePosixAttr();
+            tempInput = (baseDir != null)
+                    ? createTempFileWithAttr(baseDir, "video-input-", ".mp4", attr)
+                    : createTempFileWithAttr(null, "video-input-", ".mp4", attr);
+
         } catch (UnsupportedOperationException e) {
             tempInput = (baseDir != null)
                     ? Files.createTempFile(baseDir, "video-input-", ".mp4")
@@ -123,20 +110,10 @@ public class SplitVideoUseCaseImpl implements SplitVideoUseCase {
         } catch (Exception ignored) {
         }
         try {
-            if (isUnix()) {
-                FileAttribute<Set<PosixFilePermission>> attr = buildDirPosixAttr();
-                tempDir = (baseDir != null)
-                        ? createTempDirectoryWithAttr(baseDir, "video-chunks-", attr)
-                        : createTempDirectoryWithAttr(null, "video-chunks-", attr);
-            } else {
-                tempDir = (baseDir != null)
-                        ? Files.createTempDirectory(baseDir, "video-chunks-")
-                        : Files.createTempDirectory("video-chunks-");
-                File f = tempDir.toFile();
-                f.setReadable(true, true);
-                f.setWritable(true, true);
-                f.setExecutable(true, true);
-            }
+            FileAttribute<Set<PosixFilePermission>> attr = buildDirPosixAttr();
+            tempDir = (baseDir != null)
+                    ? createTempDirectoryWithAttr(baseDir, "video-chunks-", attr)
+                    : createTempDirectoryWithAttr(null, "video-chunks-", attr);
         } catch (UnsupportedOperationException e) {
             tempDir = (baseDir != null)
                     ? Files.createTempDirectory(baseDir, "video-chunks-")
@@ -265,11 +242,6 @@ public class SplitVideoUseCaseImpl implements SplitVideoUseCase {
             }
         } catch (IOException ignored) {
         }
-    }
-
-    boolean isUnix() {
-        String os = System.getProperty("os.name").toLowerCase();
-        return os.contains("nix") || os.contains("nux") || os.contains("mac") || os.contains("aix") || os.contains("sunos");
     }
 
     FileAttribute<Set<PosixFilePermission>> buildFilePosixAttr() {
