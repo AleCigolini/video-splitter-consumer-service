@@ -14,7 +14,6 @@ import static org.mockito.Mockito.*;
 class AzureBlobServiceClientFactoryTest {
     @AfterEach
     void clearCache() {
-        // Clear the cache for isolation between tests
         var cacheField = AzureBlobServiceClientFactory.class.getDeclaredFields()[0];
         cacheField.setAccessible(true);
         try {
