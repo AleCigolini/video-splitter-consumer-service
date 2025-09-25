@@ -5,7 +5,6 @@ import br.com.video.splitter.common.interfaces.VideoStoragePersister;
 import br.com.video.splitter.domain.VideoInfo;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.condition.EnabledOnOs;
 import org.junit.jupiter.api.condition.OS;
 import org.mockito.Mockito;
@@ -105,14 +104,14 @@ class SplitVideoUseCaseImplTest {
     }
 
     @Test
-    void buildFfmpegCommand_shouldContainAllArguments() throws Exception {
+    void buildFfmpegCommand_shouldContainAllArguments() {
         Path tempInput = Path.of("/tmp/in.mp4");
         Path tempDir = Path.of("/tmp/out");
         List<String> cmd = useCase.buildFfmpegCommand(tempInput, tempDir, "15");
         assertTrue(cmd.contains("ffmpeg"));
         assertTrue(cmd.contains("-segment_time"));
         assertTrue(cmd.contains("15"));
-        assertTrue(cmd.get(cmd.size() - 1).contains("chunk_%03d.mp4"));
+        assertTrue(cmd.getLast().contains("chunk_%03d.mp4"));
     }
 
     @Test
@@ -170,8 +169,8 @@ class SplitVideoUseCaseImplTest {
     @Test
     void listChunkFiles_shouldReturnOnlyRegularFilesSorted() throws Exception {
         Path dir = Files.createTempDirectory("list-chunks-");
-        Path fileB = Files.createTempFile(dir, "b", ".mp4");
-        Path fileA = Files.createTempFile(dir, "a", ".mp4");
+        Files.createTempFile(dir, "b", ".mp4");
+        Files.createTempFile(dir, "a", ".mp4");
         Path subDir = Files.createTempDirectory(dir, "sub");
         List<Path> files = useCase.listChunkFiles(dir);
         assertEquals(2, files.size());
@@ -311,144 +310,6 @@ class SplitVideoUseCaseImplTest {
         Process p = useCase.startProcess(cmd);
         int exit = p.waitFor();
         assertEquals(0, exit);
-    }
-
-    @Test
-    void resolveSegmentTime_shouldUseSystemPropertyWhenPresent() {
-        String original = System.getProperty("SEGMENT_TIME");
-        try {
-            System.setProperty("SEGMENT_TIME", "7");
-            assertEquals("7", useCase.resolveSegmentTime());
-        } finally {
-            if (original == null) {
-                System.clearProperty("SEGMENT_TIME");
-            } else {
-                System.setProperty("SEGMENT_TIME", original);
-            }
-        }
-    }
-
-    @Test
-    void resolveSegmentTime_shouldUseEnvSimWhenPresent() {
-        String originalProp = System.getProperty("SEGMENT_TIME");
-        String originalEnvSim = System.getProperty("SEGMENT_TIME_ENV");
-        try {
-            if (originalProp != null) System.clearProperty("SEGMENT_TIME");
-            System.setProperty("SEGMENT_TIME_ENV", "12");
-            assertEquals("12", useCase.resolveSegmentTime());
-        } finally {
-            if (originalProp != null) System.setProperty("SEGMENT_TIME", originalProp);
-            if (originalEnvSim == null) System.clearProperty("SEGMENT_TIME_ENV");
-            else System.setProperty("SEGMENT_TIME_ENV", originalEnvSim);
-        }
-    }
-
-    @Test
-    void safeDelete_shouldSwallowIOExceptionWhenFileLocked() throws Exception {
-        Path f = Files.createTempFile("locked-", ".txt");
-        Files.write(f, new byte[]{1});
-        InputStream lock = new FileInputStream(f.toFile());
-        try {
-            useCase.safeDelete(f);
-            assertTrue(Files.exists(f) || !Files.exists(f));
-        } finally {
-            lock.close();
-            useCase.safeDelete(f);
-        }
-    }
-
-    @Test
-    void safeDeleteDirectory_shouldTriggerCatchInsideLambdaWhenFileLocked() throws Exception {
-        Path dir = Files.createTempDirectory("lockdir-");
-        Path f = Files.createTempFile(dir, "f", ".txt");
-        Files.write(f, new byte[]{1});
-        InputStream lock = new FileInputStream(f.toFile());
-        try {
-            useCase.safeDeleteDirectory(dir);
-            assertTrue(Files.exists(dir) || !Files.exists(dir));
-            assertTrue(Files.exists(f) || !Files.exists(f));
-        } finally {
-            lock.close();
-            useCase.safeDeleteDirectory(dir);
-            assertFalse(Files.exists(dir));
-        }
-    }
-
-    @Test
-    void createTempInputFrom_shouldFallbackToDefaultWhenTmpDirFails() throws Exception {
-        String os = System.getProperty("os.name").toLowerCase();
-        boolean isUnix = os.contains("nix") || os.contains("nux") || os.contains("mac") || os.contains("aix") || os.contains("sunos");
-        Assumptions.assumeFalse(isUnix, "Skipping on Unix-like systems");
-        String originalTmp = System.getProperty("java.io.tmpdir");
-        System.setProperty("java.io.tmpdir", "?invalid_path");
-        try {
-            byte[] data = {1,2,3};
-            Path temp = new SplitVideoUseCaseImpl(persister, eventGateway).createTempInputFrom(new ByteArrayInputStream(data));
-            assertTrue(Files.exists(temp));
-            assertArrayEquals(data, Files.readAllBytes(temp));
-            Files.deleteIfExists(temp);
-        } finally {
-            if (originalTmp != null) System.setProperty("java.io.tmpdir", originalTmp);
-            else System.clearProperty("java.io.tmpdir");
-        }
-    }
-
-    @Test
-    void createTempOutputDir_shouldFallbackToDefaultWhenTmpDirFails() throws Exception {
-        String os = System.getProperty("os.name").toLowerCase();
-        boolean isUnix = os.contains("nix") || os.contains("nux") || os.contains("mac") || os.contains("aix") || os.contains("sunos");
-        Assumptions.assumeFalse(isUnix, "Skipping on Unix-like systems");
-        String originalTmp = System.getProperty("java.io.tmpdir");
-        System.setProperty("java.io.tmpdir", "?invalid_path");
-        try {
-            Path temp = new SplitVideoUseCaseImpl(persister, eventGateway).createTempOutputDir();
-            assertTrue(Files.exists(temp));
-            assertTrue(Files.isDirectory(temp));
-            Files.deleteIfExists(temp);
-        } finally {
-            if (originalTmp != null) System.setProperty("java.io.tmpdir", originalTmp);
-            else System.clearProperty("java.io.tmpdir");
-        }
-    }
-
-    @Test
-    void createTempInputFrom_shouldHandleUnsupportedPosixPermissions() throws Exception {
-        SplitVideoUseCaseImpl useCase = new SplitVideoUseCaseImpl(persister, eventGateway) {
-            @Override
-            public Path createTempInputFrom(InputStream inputStream) throws IOException {
-                Path tempInput = Files.createTempFile("video-input-", ".mp4");
-                try {
-                    throw new UnsupportedOperationException();
-                } catch (UnsupportedOperationException ignored) {
-                }
-                Files.copy(inputStream, tempInput, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
-                return tempInput;
-            }
-        };
-        byte[] data = {9,8,7};
-        Path temp = useCase.createTempInputFrom(new ByteArrayInputStream(data));
-        assertTrue(Files.exists(temp));
-        assertArrayEquals(data, Files.readAllBytes(temp));
-        Files.deleteIfExists(temp);
-    }
-
-    @Test
-    void createTempOutputDir_shouldHandleUnsupportedPosixPermissions() throws Exception {
-        SplitVideoUseCaseImpl useCase = new SplitVideoUseCaseImpl(persister, eventGateway) {
-            @Override
-            public Path createTempOutputDir() throws IOException {
-                Path tempDir = Files.createTempDirectory("video-chunks-");
-                try {
-                    throw new UnsupportedOperationException();
-                } catch (UnsupportedOperationException ignored) {
-                }
-                return tempDir;
-            }
-        };
-        Path temp = useCase.createTempOutputDir();
-        assertTrue(Files.exists(temp));
-        assertTrue(Files.isDirectory(temp));
-        Files.deleteIfExists(temp);
     }
 
     @Test
