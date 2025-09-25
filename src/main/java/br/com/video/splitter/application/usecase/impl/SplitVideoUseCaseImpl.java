@@ -6,6 +6,7 @@ import br.com.video.splitter.common.interfaces.VideoStoragePersister;
 import br.com.video.splitter.domain.VideoInfo;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -19,10 +20,14 @@ import java.util.List;
 import java.util.Set;
 
 @ApplicationScoped
+@SuppressWarnings("ResultOfMethodCallIgnored")
 public class SplitVideoUseCaseImpl implements SplitVideoUseCase {
 
     private final VideoStoragePersister persister;
     private final VideoEventGateway eventGateway;
+
+    @ConfigProperty(name = "segment.time", defaultValue = "30")
+    String configuredSegmentTime;
 
     @Inject
     public SplitVideoUseCaseImpl(VideoStoragePersister persister, VideoEventGateway eventGateway) {
@@ -58,16 +63,7 @@ public class SplitVideoUseCaseImpl implements SplitVideoUseCase {
     }
 
     String resolveSegmentTime() {
-        String prop = System.getProperty("SEGMENT_TIME");
-        if (prop != null && !prop.isBlank()) {
-            return prop;
-        }
-        String propEnv = System.getProperty("SEGMENT_TIME_ENV");
-        if (propEnv != null && !propEnv.isBlank()) {
-            return propEnv;
-        }
-        String segmentTime = System.getenv("SEGMENT_TIME");
-        return (segmentTime == null || segmentTime.isBlank()) ? "30" : segmentTime;
+        return (configuredSegmentTime == null || configuredSegmentTime.isBlank()) ? "30" : configuredSegmentTime;
     }
 
     Path createTempInputFrom(InputStream inputStream) throws IOException {
@@ -153,7 +149,7 @@ public class SplitVideoUseCaseImpl implements SplitVideoUseCase {
     void runFfmpeg(List<String> command) throws IOException, InterruptedException {
         Process process = startProcess(command);
         consumeProcessOutput(process);
-        waitForSuccess(process, "FFmpeg");
+        waitForSuccess(process);
     }
 
     Process startProcess(List<String> command) throws IOException {
@@ -168,10 +164,10 @@ public class SplitVideoUseCaseImpl implements SplitVideoUseCase {
         }
     }
 
-    void waitForSuccess(Process process, String context) throws InterruptedException {
+    void waitForSuccess(Process process) throws InterruptedException {
         int exit = process.waitFor();
         if (exit != 0) {
-            throw new RuntimeException("Falha ao executar " + context + " para segmentação. Código de saída: " + exit);
+            throw new RuntimeException("Falha ao executar FFmpeg para segmentação. Código de saída: " + exit);
         }
     }
 
