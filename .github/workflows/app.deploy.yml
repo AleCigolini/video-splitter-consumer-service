@@ -54,10 +54,10 @@ jobs:
           password: ${{ secrets.DOCKER_HUB_TOKEN }}
 
       - name: Build Docker image
-        run: docker build -t alecigolini/hackaton-videosplitterconsumerservice:latest .
+        run: docker build -t alecigolini/video-splitter:latest .
 
       - name: Push Docker image
-        run: docker push alecigolini/hackaton-videosplitterconsumerservice:latest
+        run: docker push alecigolini/video-splitter:latest
 
       - name: Azure Login
         uses: azure/login@v2
