@@ -3,6 +3,7 @@ package br.com.video.splitter.application.usecase.impl;
 import br.com.video.splitter.application.gateway.VideoEventGateway;
 import br.com.video.splitter.common.interfaces.VideoStoragePersister;
 import br.com.video.splitter.domain.VideoInfo;
+import br.com.video.splitter.domain.VideoChunkInfo; // added
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledOnOs;
@@ -128,9 +129,11 @@ class SplitVideoUseCaseImplTest {
 
     @Test
     void buildChunkInfo_shouldCopyFields() {
-        VideoInfo info = useCase.buildChunkInfo(videoInfo, "abc.mp4");
+        VideoChunkInfo info = useCase.buildChunkInfo(videoInfo, "abc.mp4", 2, 10);
         assertEquals(videoInfo.getId(), info.getId());
         assertEquals("abc.mp4", info.getFileName());
+        assertEquals(2, info.getChunkId());
+        assertEquals(10, info.getTotalChunks());
     }
 
     @Test
@@ -145,8 +148,9 @@ class SplitVideoUseCaseImplTest {
 
     @Test
     void publishChunkEvent_shouldCallGateway() {
-        useCase.publishChunkEvent(videoInfo);
-        verify(eventGateway).publishVideoSplitted(videoInfo);
+        VideoChunkInfo chunkInfo = new VideoChunkInfo(videoInfo, 0, 2, "000.mp4");
+        useCase.publishChunkEvent(chunkInfo);
+        verify(eventGateway).publishVideoSplitted(chunkInfo);
     }
 
     @Test

@@ -4,6 +4,7 @@ import br.com.video.splitter.application.gateway.VideoEventGateway;
 import br.com.video.splitter.application.usecase.SplitVideoUseCase;
 import br.com.video.splitter.common.interfaces.VideoStoragePersister;
 import br.com.video.splitter.domain.VideoInfo;
+import br.com.video.splitter.domain.VideoChunkInfo;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
@@ -182,10 +183,11 @@ public class SplitVideoUseCaseImpl implements SplitVideoUseCase {
     }
 
     private void persistAndPublishChunks(List<Path> chunkFiles, VideoInfo videoInfo) throws IOException {
-        for (int i = 0; i < chunkFiles.size(); i++) {
+        int total = chunkFiles.size();
+        for (int i = 0; i < total; i++) {
             Path chunk = chunkFiles.get(i);
             String chunkFileName = formatChunkFileName(i);
-            VideoInfo chunkInfo = buildChunkInfo(videoInfo, chunkFileName);
+            VideoChunkInfo chunkInfo = buildChunkInfo(videoInfo, chunkFileName, i, total);
             persistSingleChunk(chunk, chunkInfo);
             publishChunkEvent(chunkInfo);
         }
@@ -195,13 +197,8 @@ public class SplitVideoUseCaseImpl implements SplitVideoUseCase {
         return String.format("%03d.mp4", index);
     }
 
-    VideoInfo buildChunkInfo(VideoInfo original, String chunkFileName) {
-        return new VideoInfo(
-                original.getId(),
-                original.getContainerName(),
-                original.getConnectionString(),
-                chunkFileName
-        );
+    VideoChunkInfo buildChunkInfo(VideoInfo original, String chunkFileName, int chunkId, int totalChunks) {
+        return new VideoChunkInfo(original, chunkId, totalChunks, chunkFileName);
     }
 
     void persistSingleChunk(Path chunk, VideoInfo chunkInfo) throws IOException {
@@ -211,7 +208,7 @@ public class SplitVideoUseCaseImpl implements SplitVideoUseCase {
         }
     }
 
-    void publishChunkEvent(VideoInfo chunkInfo) {
+    void publishChunkEvent(VideoChunkInfo chunkInfo) {
         eventGateway.publishVideoSplitted(chunkInfo);
     }
 
