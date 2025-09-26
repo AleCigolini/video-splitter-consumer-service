@@ -32,6 +32,10 @@
     <dependencies>
         <dependency>
             <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-jackson</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.quarkus</groupId>
             <artifactId>quarkus-messaging-kafka</artifactId>
         </dependency>
         <dependency>
@@ -69,6 +73,10 @@
             <artifactId>mockito-core</artifactId>
             <version>5.2.0</version>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-smallrye-health</artifactId>
         </dependency>
     </dependencies>
 

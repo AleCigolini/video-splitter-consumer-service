@@ -1,5 +1,6 @@
 package br.com.video.splitter.common.domain.dto.request;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -7,19 +8,28 @@ import lombok.Data;
 
 import java.util.UUID;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 @Data
 public class UploadedVideoInfoDto {
-    @NotBlank
     @NotNull
     @JsonProperty("id_video")
     private UUID id;
     @NotBlank
     @NotNull
-    private final String containerName;
+    private String containerName;
     @NotBlank
     @NotNull
-    private final String connectionString;
+    private String connectionString;
     @NotBlank
     @NotNull
-    private final String fileName;
+    private String fileName;
+
+    public UploadedVideoInfoDto() {
+    }
+
+    public UploadedVideoInfoDto(String containerName, String connectionString, String fileName) {
+        this.containerName = containerName;
+        this.connectionString = connectionString;
+        this.fileName = fileName;
+    }
 }
