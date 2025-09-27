@@ -13,45 +13,47 @@ class UploadedVideoInfoDtoTest {
         String containerName = "container";
         String connectionString = "conn";
         String fileName = "file.mp4";
-        UploadedVideoInfoDto dto = new UploadedVideoInfoDto(containerName, connectionString, fileName);
+        UUID userId = UUID.randomUUID();
+        UploadedVideoInfoDto dto = new UploadedVideoInfoDto(containerName, connectionString, fileName, userId);
         dto.setId(id);
         assertEquals(id, dto.getId());
         assertEquals(containerName, dto.getContainerName());
         assertEquals(connectionString, dto.getConnectionString());
         assertEquals(fileName, dto.getFileName());
+        assertEquals(userId, dto.getUserId());
     }
 
     @Test
     void shouldAllowNullId() {
-        UploadedVideoInfoDto dto = new UploadedVideoInfoDto("container", "conn", "file.mp4");
+        UploadedVideoInfoDto dto = new UploadedVideoInfoDto("container", "conn", "file.mp4", null);
         dto.setId(null);
         assertNull(dto.getId());
     }
 
     @Test
     void shouldAllowNullFieldsExceptFinals() {
-        UploadedVideoInfoDto dto = new UploadedVideoInfoDto(null, null, null);
+        UploadedVideoInfoDto dto = new UploadedVideoInfoDto(null, null, null, null);
         dto.setId(null);
         assertNull(dto.getId());
         assertNull(dto.getContainerName());
         assertNull(dto.getConnectionString());
         assertNull(dto.getFileName());
+        assertNull(dto.getUserId());
     }
 
     @Test
     void shouldTestEqualsAndHashCode() {
-        UploadedVideoInfoDto dto1 = new UploadedVideoInfoDto("container", "conn", "file.mp4");
-        UploadedVideoInfoDto dto2 = new UploadedVideoInfoDto("container", "conn", "file.mp4");
+        UploadedVideoInfoDto dto1 = new UploadedVideoInfoDto("container", "conn", "file.mp4", null);
+        UploadedVideoInfoDto dto2 = new UploadedVideoInfoDto("container", "conn", "file.mp4", null);
         assertEquals(dto1, dto2);
         assertEquals(dto1.hashCode(), dto2.hashCode());
     }
 
     @Test
     void shouldTestToString() {
-        UploadedVideoInfoDto dto = new UploadedVideoInfoDto("container", "conn", "file.mp4");
+        UploadedVideoInfoDto dto = new UploadedVideoInfoDto("container", "conn", "file.mp4", null);
         assertTrue(dto.toString().contains("container"));
         assertTrue(dto.toString().contains("conn"));
         assertTrue(dto.toString().contains("file.mp4"));
     }
 }
-

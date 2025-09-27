@@ -3,7 +3,7 @@ package br.com.video.splitter.application.usecase.impl;
 import br.com.video.splitter.application.gateway.VideoEventGateway;
 import br.com.video.splitter.common.interfaces.VideoStoragePersister;
 import br.com.video.splitter.domain.VideoInfo;
-import br.com.video.splitter.domain.VideoChunkInfo; // added
+import br.com.video.splitter.domain.VideoChunkInfo;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledOnOs;
@@ -33,7 +33,7 @@ class SplitVideoUseCaseImplTest {
         persister = mock(VideoStoragePersister.class);
         eventGateway = mock(VideoEventGateway.class);
         useCase = Mockito.spy(new SplitVideoUseCaseImpl(persister, eventGateway));
-        videoInfo = new VideoInfo(UUID.randomUUID(), "container", "conn", "file.mp4");
+        videoInfo = new VideoInfo(UUID.randomUUID(), "container", "conn", "file.mp4", UUID.randomUUID());
         inputStream = new ByteArrayInputStream(new byte[]{1, 2, 3});
     }
 
@@ -140,7 +140,7 @@ class SplitVideoUseCaseImplTest {
     void persistSingleChunk_shouldCallPersister() throws Exception {
         Path chunk = Files.createTempFile("chunk-", ".mp4");
         Files.write(chunk, new byte[]{1, 2});
-        VideoInfo info = new VideoInfo(UUID.randomUUID(), "c", "c", "f");
+        VideoInfo info = new VideoInfo(UUID.randomUUID(), "c", "c", "f", UUID.randomUUID());
         useCase.persistSingleChunk(chunk, info);
         verify(persister).save(eq(info), any(), eq(2L));
         Files.deleteIfExists(chunk);
