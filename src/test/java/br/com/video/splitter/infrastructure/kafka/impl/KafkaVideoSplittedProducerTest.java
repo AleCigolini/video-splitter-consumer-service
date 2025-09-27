@@ -26,7 +26,7 @@ class KafkaVideoSplittedProducerTest {
     @Test
     void shouldSendVideoChunkInfoObjectToEmitter() {
         UUID id = UUID.fromString("123e4567-e89b-12d3-a456-426614174000");
-        VideoInfo base = new VideoInfo(id, "container", "conn-str", "video.mp4");
+        VideoInfo base = new VideoInfo(id, "container", "conn-str", "video.mp4", id);
         VideoChunkInfo chunk = new VideoChunkInfo(base, 2, 5, "video_2.mp4");
 
         producer.send(chunk);
@@ -39,5 +39,6 @@ class KafkaVideoSplittedProducerTest {
         assertEquals(5, sent.getTotalChunks());
         assertEquals("video_2.mp4", sent.getFileName());
         assertEquals("container", sent.getContainerName());
+        assertEquals(id, sent.getUserId());
     }
 }

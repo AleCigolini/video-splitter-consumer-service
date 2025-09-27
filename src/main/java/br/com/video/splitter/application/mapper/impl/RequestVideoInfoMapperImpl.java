@@ -25,7 +25,8 @@ public class RequestVideoInfoMapperImpl implements RequestVideoInfoMapper {
                         src.getId(),
                         src.getContainerName(),
                         src.getConnectionString(),
-                        src.getFileName()
+                        src.getFileName(),
+                        src.getUserId()
                 );
             }
         };

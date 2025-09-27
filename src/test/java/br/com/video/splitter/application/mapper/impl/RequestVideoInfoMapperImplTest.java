@@ -24,9 +24,10 @@ class RequestVideoInfoMapperImplTest {
     void shouldMapUploadedVideoInfoDtoToVideoInfo() {
         UUID id = UUID.randomUUID();
         UploadedVideoInfoDto dto = new UploadedVideoInfoDto(
-            "container",
-            "conn",
-            "file.mp4"
+                "container",
+                "conn",
+                "file.mp4",
+                id
         );
         dto.setId(id);
         VideoInfo result = mapper.requestDtoToDomain(dto);
@@ -35,12 +36,13 @@ class RequestVideoInfoMapperImplTest {
         assertEquals("container", result.getContainerName());
         assertEquals("conn", result.getConnectionString());
         assertEquals("file.mp4", result.getFileName());
+        assertEquals(id, result.getUserId());
     }
 
     @Test
     void shouldHandleNullFieldsInDto() {
         UploadedVideoInfoDto dto = new UploadedVideoInfoDto(
-            null, null, null
+                null, null, null, null
         );
         dto.setId(null);
         VideoInfo result = mapper.requestDtoToDomain(dto);
@@ -49,6 +51,7 @@ class RequestVideoInfoMapperImplTest {
         assertNull(result.getContainerName());
         assertNull(result.getConnectionString());
         assertNull(result.getFileName());
+        assertNull(result.getUserId());
     }
 
     @Test

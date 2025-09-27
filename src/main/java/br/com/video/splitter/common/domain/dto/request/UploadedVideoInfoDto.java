@@ -15,6 +15,8 @@ public class UploadedVideoInfoDto {
     @JsonProperty("id_video")
     private UUID id;
     @NotBlank
+    private UUID userId;
+    @NotBlank
     @NotNull
     private String containerName;
     @NotBlank
@@ -27,9 +29,10 @@ public class UploadedVideoInfoDto {
     public UploadedVideoInfoDto() {
     }
 
-    public UploadedVideoInfoDto(String containerName, String connectionString, String fileName) {
+    public UploadedVideoInfoDto(String containerName, String connectionString, String fileName, UUID userId) {
         this.containerName = containerName;
         this.connectionString = connectionString;
         this.fileName = fileName;
+        this.userId = userId;
     }
 }

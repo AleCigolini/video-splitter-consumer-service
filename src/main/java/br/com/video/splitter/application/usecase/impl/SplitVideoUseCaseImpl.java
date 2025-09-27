@@ -187,7 +187,7 @@ public class SplitVideoUseCaseImpl implements SplitVideoUseCase {
         for (int i = 0; i < total; i++) {
             Path chunk = chunkFiles.get(i);
             String chunkFileName = formatChunkFileName(i);
-            VideoChunkInfo chunkInfo = buildChunkInfo(videoInfo, chunkFileName, i, total);
+            VideoChunkInfo chunkInfo = buildChunkInfo(videoInfo, chunkFileName, i + 1, total);
             persistSingleChunk(chunk, chunkInfo);
             publishChunkEvent(chunkInfo);
         }
@@ -197,8 +197,8 @@ public class SplitVideoUseCaseImpl implements SplitVideoUseCase {
         return String.format("%03d.mp4", index);
     }
 
-    VideoChunkInfo buildChunkInfo(VideoInfo original, String chunkFileName, int chunkId, int totalChunks) {
-        return new VideoChunkInfo(original, chunkId, totalChunks, chunkFileName);
+    VideoChunkInfo buildChunkInfo(VideoInfo original, String chunkFileName, int chunkPosition, int totalChunks) {
+        return new VideoChunkInfo(original, chunkPosition, totalChunks, chunkFileName);
     }
 
     void persistSingleChunk(Path chunk, VideoInfo chunkInfo) throws IOException {
