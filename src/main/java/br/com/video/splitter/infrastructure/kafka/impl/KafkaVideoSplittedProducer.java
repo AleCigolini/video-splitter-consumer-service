@@ -9,7 +9,7 @@ import org.eclipse.microprofile.reactive.messaging.Emitter;
 @ApplicationScoped
 public class KafkaVideoSplittedProducer implements VideoSplittedProducer {
 
-    @Channel("video-splitted")
+    @Channel("video-split")
     Emitter<VideoChunkInfo> emitter;
 
     @Override
