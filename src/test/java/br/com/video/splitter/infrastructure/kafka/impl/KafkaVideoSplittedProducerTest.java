@@ -42,7 +42,7 @@ class KafkaVideoSplittedProducerTest {
         assertTrue(payloadObj instanceof VideoChunkInfo);
         VideoChunkInfo payload = (VideoChunkInfo) payloadObj;
         assertEquals(videoId, payload.getVideoId());
-        assertEquals(2, payload.getChunkId());
+        assertEquals(2, payload.getChunkPosition());
         assertEquals(5, payload.getTotalChunks());
         assertEquals("video_2.mp4", payload.getFileName());
         assertEquals("container", payload.getContainerName());
