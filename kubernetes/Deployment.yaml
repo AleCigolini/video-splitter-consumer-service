@@ -62,8 +62,6 @@ spec:
               value: "video.status"
             - name: SEGMENT_TIME
               value: "30"
-            - name: HTTP_ROOT_PATH
-              value: "/video-splitter"
           resources:
             requests:
               cpu: "400m"
@@ -73,13 +71,13 @@ spec:
               memory: "1024Mi"
           readinessProbe:
             httpGet:
-              path: /video-splitter/q/health/ready
+              path: /q/health/ready
               port: 8080
             initialDelaySeconds: 20
             periodSeconds: 5
           livenessProbe:
             httpGet:
-              path: /video-splitter/q/health/live
+              path: /q/health/live
               port: 8080
             initialDelaySeconds: 20
             periodSeconds: 10
