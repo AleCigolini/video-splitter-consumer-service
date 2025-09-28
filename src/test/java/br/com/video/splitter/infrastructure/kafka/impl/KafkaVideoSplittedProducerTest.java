@@ -3,9 +3,11 @@ package br.com.video.splitter.infrastructure.kafka.impl;
 import br.com.video.splitter.domain.VideoChunkInfo;
 import br.com.video.splitter.domain.VideoInfo;
 import org.eclipse.microprofile.reactive.messaging.Emitter;
+import org.eclipse.microprofile.reactive.messaging.Message;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import io.smallrye.reactive.messaging.kafka.api.OutgoingKafkaRecordMetadata;
 
 import java.util.UUID;
 
@@ -13,7 +15,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 class KafkaVideoSplittedProducerTest {
-    Emitter<VideoChunkInfo> emitter;
+    Emitter<Object> emitter;
     KafkaVideoSplittedProducer producer;
 
     @BeforeEach
@@ -21,6 +23,7 @@ class KafkaVideoSplittedProducerTest {
         emitter = mock(Emitter.class);
         producer = new KafkaVideoSplittedProducer();
         producer.emitter = emitter;
+        producer.splitTopic = "video.split";
     }
 
     @Test
@@ -32,14 +35,21 @@ class KafkaVideoSplittedProducerTest {
 
         producer.send(chunk);
 
-        ArgumentCaptor<VideoChunkInfo> captor = ArgumentCaptor.forClass(VideoChunkInfo.class);
+        ArgumentCaptor<Message<?>> captor = ArgumentCaptor.forClass(Message.class);
         verify(emitter).send(captor.capture());
-        VideoChunkInfo sent = captor.getValue();
-        assertEquals(videoId, sent.getVideoId());
-        assertEquals(2, sent.getChunkId());
-        assertEquals(5, sent.getTotalChunks());
-        assertEquals("video_2.mp4", sent.getFileName());
-        assertEquals("container", sent.getContainerName());
-        assertEquals(id, sent.getUserId());
+        Message<?> sentMsg = captor.getValue();
+        Object payloadObj = sentMsg.getPayload();
+        assertTrue(payloadObj instanceof VideoChunkInfo);
+        VideoChunkInfo payload = (VideoChunkInfo) payloadObj;
+        assertEquals(videoId, payload.getVideoId());
+        assertEquals(2, payload.getChunkId());
+        assertEquals(5, payload.getTotalChunks());
+        assertEquals("video_2.mp4", payload.getFileName());
+        assertEquals("container", payload.getContainerName());
+        assertEquals(id, payload.getUserId());
+        OutgoingKafkaRecordMetadata<?> metadata = sentMsg.getMetadata(OutgoingKafkaRecordMetadata.class).orElse(null);
+        assertNotNull(metadata);
+        assertEquals("video.split", metadata.getTopic());
+        assertEquals(videoId.toString(), metadata.getKey());
     }
 }
