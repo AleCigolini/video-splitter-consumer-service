@@ -19,7 +19,7 @@ public class AzureBlobVideoStoragePersister implements VideoStoragePersister {
         BlobContainerClient containerClient = blobServiceClient.getBlobContainerClient(videoInfo.getContainerName());
         containerClient.createIfNotExists();
 
-        String blobPath = videoInfo.getId() + "/chunks/" + videoInfo.getFileName();
+        String blobPath = videoInfo.getVideoId() + "/chunks/" + videoInfo.getFileName();
 
         BlobClient blobClient = containerClient.getBlobClient(blobPath);
         blobClient.upload(data, length, true);

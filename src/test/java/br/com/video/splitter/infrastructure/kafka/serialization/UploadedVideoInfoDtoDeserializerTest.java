@@ -17,16 +17,16 @@ class UploadedVideoInfoDtoDeserializerTest {
     @Test
     @DisplayName("Deve desserializar JSON válido com todos os campos")
     void shouldDeserializeValidJson() {
-        UUID id = UUID.fromString("123e4567-e89b-12d3-a456-426614174000");
+        Long id = 1L;
         String json = "{" +
-                "\"id_video\":\"" + id + "\"," +
+                "\"videoId\":\"" + id + "\"," +
                 "\"containerName\":\"container-a\"," +
                 "\"connectionString\":\"conn-xyz\"," +
                 "\"fileName\":\"video.mp4\"" +
                 "}";
         UploadedVideoInfoDto dto = deserializer.deserialize(TOPIC, json.getBytes(StandardCharsets.UTF_8));
         assertNotNull(dto);
-        assertEquals(id, dto.getId());
+        assertEquals(id, dto.getVideoId());
         assertEquals("container-a", dto.getContainerName());
         assertEquals("conn-xyz", dto.getConnectionString());
         assertEquals("video.mp4", dto.getFileName());
@@ -42,7 +42,7 @@ class UploadedVideoInfoDtoDeserializerTest {
                 "}";
         UploadedVideoInfoDto dto = deserializer.deserialize(TOPIC, json.getBytes(StandardCharsets.UTF_8));
         assertNotNull(dto);
-        assertNull(dto.getId());
+        assertNull(dto.getVideoId());
         assertEquals("container-b", dto.getContainerName());
         assertEquals("conn-123", dto.getConnectionString());
         assertEquals("file2.mp4", dto.getFileName());

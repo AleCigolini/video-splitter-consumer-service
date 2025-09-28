@@ -10,7 +10,7 @@ public class VideoChunkInfo extends VideoInfo {
     private final int totalChunks;
 
     public VideoChunkInfo(VideoInfo base, int chunkPosition, int totalChunks, String chunkFileName) {
-        super(base.getId(), base.getContainerName(), base.getConnectionString(), chunkFileName, base.getUserId());
+        super(base.getVideoId(), base.getContainerName(), base.getConnectionString(), chunkFileName, base.getUserId());
         this.chunkPosition = chunkPosition;
         this.totalChunks = totalChunks;
     }

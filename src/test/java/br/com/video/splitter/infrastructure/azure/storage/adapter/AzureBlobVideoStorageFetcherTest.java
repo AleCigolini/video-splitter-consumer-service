@@ -37,7 +37,7 @@ class AzureBlobVideoStorageFetcherTest {
         try (MockedStatic<AzureBlobServiceClientFactory> mockedFactory = mockStatic(AzureBlobServiceClientFactory.class)) {
             when(videoInfo.getConnectionString()).thenReturn("UseDevelopmentStorage=true;");
             when(videoInfo.getContainerName()).thenReturn("container");
-            when(videoInfo.getId()).thenReturn(UUID.randomUUID());
+            when(videoInfo.getVideoId()).thenReturn(1L);
             when(videoInfo.getFileName()).thenReturn("file.mp4");
             mockedFactory.when(() -> AzureBlobServiceClientFactory.getClient(anyString())).thenReturn(blobServiceClient);
             when(blobServiceClient.getBlobContainerClient(anyString())).thenReturn(containerClient);
@@ -57,7 +57,7 @@ class AzureBlobVideoStorageFetcherTest {
         try (MockedStatic<AzureBlobServiceClientFactory> mockedFactory = mockStatic(AzureBlobServiceClientFactory.class)) {
             when(videoInfo.getConnectionString()).thenReturn("UseDevelopmentStorage=true;");
             when(videoInfo.getContainerName()).thenReturn("container");
-            when(videoInfo.getId()).thenReturn(UUID.randomUUID());
+            when(videoInfo.getVideoId()).thenReturn(1L);
             when(videoInfo.getFileName()).thenReturn("file.mp4");
             mockedFactory.when(() -> AzureBlobServiceClientFactory.getClient(anyString())).thenReturn(blobServiceClient);
             when(blobServiceClient.getBlobContainerClient(anyString())).thenReturn(containerClient);
