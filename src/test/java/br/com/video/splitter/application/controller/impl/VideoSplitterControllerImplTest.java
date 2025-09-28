@@ -6,13 +6,14 @@ import br.com.video.splitter.application.usecase.PublishVideoStatusUseCase;
 import br.com.video.splitter.application.usecase.SplitVideoUseCase;
 import br.com.video.splitter.common.domain.dto.request.UploadedVideoInfoDto;
 import br.com.video.splitter.domain.VideoInfo;
-import br.com.video.splitter.application.messaging.VideoStatusPublisher;
+import br.com.video.splitter.application.gateway.VideoStatusGateway;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InOrder;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -22,7 +23,6 @@ class VideoSplitterControllerImplTest {
     private GetVideoUseCase getVideoUseCase;
     private RequestVideoInfoMapper requestVideoInfoMapper;
     private SplitVideoUseCase splitVideoUseCase;
-    private VideoStatusPublisher videoStatusPublisher;
     private PublishVideoStatusUseCase publishVideoStatusUseCase;
     private VideoSplitterControllerImpl controller;
 
@@ -31,9 +31,8 @@ class VideoSplitterControllerImplTest {
         getVideoUseCase = mock(GetVideoUseCase.class);
         requestVideoInfoMapper = mock(RequestVideoInfoMapper.class);
         splitVideoUseCase = mock(SplitVideoUseCase.class);
-        videoStatusPublisher = mock(VideoStatusPublisher.class);
         publishVideoStatusUseCase = mock(PublishVideoStatusUseCase.class);
-        controller = new VideoSplitterControllerImpl(requestVideoInfoMapper, getVideoUseCase, splitVideoUseCase, videoStatusPublisher, publishVideoStatusUseCase);
+        controller = new VideoSplitterControllerImpl(requestVideoInfoMapper, getVideoUseCase, splitVideoUseCase, publishVideoStatusUseCase);
     }
 
     @Test
@@ -55,8 +54,13 @@ class VideoSplitterControllerImplTest {
     }
 
     @Test
-    void shouldThrowRuntimeExceptionWhenGetVideoFails() throws Exception {
-        UploadedVideoInfoDto dto = mock(UploadedVideoInfoDto.class);
+    void shouldPublishErrorStatusAndThrowWhenGetVideoFails() throws Exception {
+        UUID userId = UUID.randomUUID();
+        Long videoId = 123L;
+        UploadedVideoInfoDto dto = new UploadedVideoInfoDto();
+        dto.setUserId(userId);
+        dto.setVideoId(videoId);
+
         VideoInfo videoInfo = mock(VideoInfo.class);
         when(requestVideoInfoMapper.requestDtoToDomain(dto)).thenReturn(videoInfo);
         when(getVideoUseCase.getVideo(videoInfo)).thenThrow(new RuntimeException("fail"));
@@ -65,11 +69,17 @@ class VideoSplitterControllerImplTest {
         assertTrue(ex.getMessage().contains("Falha ao obter ou dividir o vídeo"));
         assertTrue(ex.getCause() instanceof RuntimeException);
         verify(splitVideoUseCase, never()).splitVideo(any(), any());
+        verify(publishVideoStatusUseCase, times(1)).publishStatus(userId, videoId, "ERROR");
     }
 
     @Test
-    void shouldThrowRuntimeExceptionWhenSplitVideoFails() throws Exception {
-        UploadedVideoInfoDto dto = mock(UploadedVideoInfoDto.class);
+    void shouldPublishErrorStatusAndThrowWhenSplitVideoFails() throws Exception {
+        UUID userId = UUID.randomUUID();
+        Long videoId = 456L;
+        UploadedVideoInfoDto dto = new UploadedVideoInfoDto();
+        dto.setUserId(userId);
+        dto.setVideoId(videoId);
+
         VideoInfo videoInfo = mock(VideoInfo.class);
         InputStream inputStream = spy(new ByteArrayInputStream(new byte[]{1, 2, 3}));
 
@@ -81,5 +91,6 @@ class VideoSplitterControllerImplTest {
         assertTrue(ex.getMessage().contains("Falha ao obter ou dividir o vídeo"));
         assertTrue(ex.getCause().getMessage().contains("split fail"));
         verify(inputStream).close();
+        verify(publishVideoStatusUseCase, times(1)).publishStatus(userId, videoId, "ERROR");
     }
 }

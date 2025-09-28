@@ -1,11 +1,11 @@
-package br.com.video.splitter.application.messaging;
+package br.com.video.splitter.application.gateway;
 
 import java.util.UUID;
 
 /**
  * Interface para publicar o status do vídeo.
  */
-public interface VideoStatusPublisher {
+public interface VideoStatusGateway {
     /**
      * Publica o status do vídeo.
      *

@@ -7,12 +7,10 @@ import br.com.video.splitter.application.usecase.PublishVideoStatusUseCase;
 import br.com.video.splitter.application.usecase.SplitVideoUseCase;
 import br.com.video.splitter.common.domain.dto.request.UploadedVideoInfoDto;
 import br.com.video.splitter.domain.VideoInfo;
-import br.com.video.splitter.application.messaging.VideoStatusPublisher;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
 import java.io.InputStream;
-import java.util.UUID;
 
 @ApplicationScoped
 public class VideoSplitterControllerImpl implements VideoSplitterController {
@@ -25,7 +23,6 @@ public class VideoSplitterControllerImpl implements VideoSplitterController {
     public VideoSplitterControllerImpl(RequestVideoInfoMapper requestVideoInfoMapper,
                                        GetVideoUseCase getVideoUseCase,
                                        SplitVideoUseCase splitVideoUseCase,
-                                       VideoStatusPublisher videoStatusPublisher,
                                        PublishVideoStatusUseCase publishVideoStatusUseCase) {
         this.getVideoUseCase = getVideoUseCase;
         this.splitVideoUseCase = splitVideoUseCase;

@@ -1,7 +1,7 @@
-package br.com.video.splitter.infrastructure.messaging;
+package br.com.video.splitter.infrastructure.kafka.impl;
 
-import br.com.video.splitter.application.messaging.VideoStatusPublisher;
 import br.com.video.splitter.common.domain.dto.event.VideoStatusEvent;
+import br.com.video.splitter.infrastructure.kafka.VideoStatusProducer;
 import io.smallrye.reactive.messaging.kafka.api.OutgoingKafkaRecordMetadata;
 import jakarta.enterprise.context.ApplicationScoped;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
@@ -12,7 +12,7 @@ import org.eclipse.microprofile.reactive.messaging.Message;
 import java.util.UUID;
 
 @ApplicationScoped
-public class KafkaVideoStatusPublisher implements VideoStatusPublisher {
+public class KafkaVideoStatusProducer implements VideoStatusProducer {
     @Channel("video-events")
     Emitter<Object> emitter;
 
