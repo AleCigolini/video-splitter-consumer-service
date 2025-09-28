@@ -15,6 +15,33 @@ No Kubernetes usamos `kubernetes/Secret.yaml` (chaves em `stringData`). No ambie
 ## Limitação importante
 O Docker Compose NÃO lê diretamente um `Secret.yaml` do Kubernetes. Precisamos converter para `.env` ou declarar manualmente em `docker-compose.yml`.
 
+## Dependência: FFmpeg
+A divisão de vídeo é feita invocando o binário `ffmpeg` pelo sistema operacional.
+
+- No container Docker desta aplicação o FFmpeg já é instalado (ver `Dockerfile`). Portanto, ao usar `docker compose up` não é necessário configurar nada.
+- Em execução local (sem Docker), é preciso ter o FFmpeg disponível no `PATH` ou configurar a propriedade `ffmpeg.binary`.
+
+Opções para execução local:
+- Instale o FFmpeg e adicione ao PATH do sistema.
+- OU defina o caminho completo via variável de ambiente `FFMPEG_BINARY` (a aplicação lê `ffmpeg.binary=${FFMPEG_BINARY:ffmpeg}`):
+  - Windows (cmd.exe, por usuário):
+    ```bat
+    setx FFMPEG_BINARY "C:\\ffmpeg\\bin\\ffmpeg.exe"
+    ```
+    Feche e reabra o terminal.
+  - Windows (PowerShell, sessão atual):
+    ```powershell
+    $env:FFMPEG_BINARY = "C:\ffmpeg\bin\ffmpeg.exe"
+    ```
+  - Linux/macOS (bash/zsh):
+    ```bash
+    export FFMPEG_BINARY=/usr/bin/ffmpeg
+    ```
+
+Para verificar:
+- Local: execute `ffmpeg -version` (ou o caminho que você configurou)
+- No container: `docker compose exec app ffmpeg -version`
+
 ## Scripts auxiliares
 Foram adicionados dois scripts PowerShell em `scripts/`:
 

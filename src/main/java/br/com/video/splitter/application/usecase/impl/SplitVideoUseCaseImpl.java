@@ -30,6 +30,9 @@ public class SplitVideoUseCaseImpl implements SplitVideoUseCase {
     @ConfigProperty(name = "segment.time", defaultValue = "30")
     String configuredSegmentTime;
 
+    @ConfigProperty(name = "ffmpeg.binary", defaultValue = "ffmpeg")
+    String ffmpegBinary;
+
     @Inject
     public SplitVideoUseCaseImpl(VideoStoragePersister persister, VideoEventGateway eventGateway) {
         this.persister = persister;
@@ -65,6 +68,10 @@ public class SplitVideoUseCaseImpl implements SplitVideoUseCase {
 
     String resolveSegmentTime() {
         return (configuredSegmentTime == null || configuredSegmentTime.isBlank()) ? "30" : configuredSegmentTime;
+    }
+
+    String resolveFfmpegBinary() {
+        return (ffmpegBinary == null || ffmpegBinary.isBlank()) ? "ffmpeg" : ffmpegBinary;
     }
 
     Path createTempInputFrom(InputStream inputStream) throws IOException {
@@ -130,7 +137,7 @@ public class SplitVideoUseCaseImpl implements SplitVideoUseCase {
     List<String> buildFfmpegCommand(Path tempInput, Path tempOutputDir, String segmentTime) {
         String outputPattern = determineOutputPattern(tempOutputDir);
         return List.of(
-                "ffmpeg",
+                resolveFfmpegBinary(),
                 "-hide_banner",
                 "-loglevel", "error",
                 "-i", tempInput.toString(),
