@@ -132,7 +132,7 @@ class SplitVideoUseCaseImplTest {
         VideoChunkInfo info = useCase.buildChunkInfo(videoInfo, "abc.mp4", 2, 10);
         assertEquals(videoInfo.getVideoId(), info.getVideoId());
         assertEquals("abc.mp4", info.getFileName());
-        assertEquals(2, info.getChunkId());
+        assertEquals(2, info.getChunkPosition());
         assertEquals(10, info.getTotalChunks());
     }
 

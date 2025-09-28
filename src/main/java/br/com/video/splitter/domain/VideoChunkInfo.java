@@ -15,7 +15,7 @@ public class VideoChunkInfo extends VideoInfo {
         this.totalChunks = totalChunks;
     }
 
-    public int getChunkId() {
+    public int getChunkPosition() {
         return chunkPosition;
     }
 
