@@ -27,11 +27,6 @@ jobs:
           java-version: 21
           distribution: 'zulu'
 
-      - name: Install FFmpeg
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends ffmpeg
-
       - name: Cache SonarQube packages
         uses: actions/cache@v4
         with:
@@ -63,6 +58,9 @@ jobs:
 
       - name: Build Docker image
         run: docker build -t alecigolini/video-splitter:latest .
+
+      - name: Verify FFmpeg in built image
+        run: docker run --rm alecigolini/video-splitter:latest ffmpeg -version
 
       - name: Push Docker image
         run: docker push alecigolini/video-splitter:latest
