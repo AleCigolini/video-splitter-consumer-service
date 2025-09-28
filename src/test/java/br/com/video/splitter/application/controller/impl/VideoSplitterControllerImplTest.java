@@ -2,9 +2,11 @@ package br.com.video.splitter.application.controller.impl;
 
 import br.com.video.splitter.application.mapper.RequestVideoInfoMapper;
 import br.com.video.splitter.application.usecase.GetVideoUseCase;
+import br.com.video.splitter.application.usecase.PublishVideoStatusUseCase;
 import br.com.video.splitter.application.usecase.SplitVideoUseCase;
 import br.com.video.splitter.common.domain.dto.request.UploadedVideoInfoDto;
 import br.com.video.splitter.domain.VideoInfo;
+import br.com.video.splitter.application.messaging.VideoStatusPublisher;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InOrder;
@@ -20,6 +22,8 @@ class VideoSplitterControllerImplTest {
     private GetVideoUseCase getVideoUseCase;
     private RequestVideoInfoMapper requestVideoInfoMapper;
     private SplitVideoUseCase splitVideoUseCase;
+    private VideoStatusPublisher videoStatusPublisher;
+    private PublishVideoStatusUseCase publishVideoStatusUseCase;
     private VideoSplitterControllerImpl controller;
 
     @BeforeEach
@@ -27,7 +31,9 @@ class VideoSplitterControllerImplTest {
         getVideoUseCase = mock(GetVideoUseCase.class);
         requestVideoInfoMapper = mock(RequestVideoInfoMapper.class);
         splitVideoUseCase = mock(SplitVideoUseCase.class);
-        controller = new VideoSplitterControllerImpl(requestVideoInfoMapper, getVideoUseCase, splitVideoUseCase);
+        videoStatusPublisher = mock(VideoStatusPublisher.class);
+        publishVideoStatusUseCase = mock(PublishVideoStatusUseCase.class);
+        controller = new VideoSplitterControllerImpl(requestVideoInfoMapper, getVideoUseCase, splitVideoUseCase, videoStatusPublisher, publishVideoStatusUseCase);
     }
 
     @Test

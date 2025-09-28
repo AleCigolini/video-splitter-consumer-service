@@ -23,7 +23,8 @@ class VideoEventGatewayImplTest {
 
     @Test
     void shouldCallProducerSendWhenPublishVideoSplitted() {
-        VideoInfo base = new VideoInfo(UUID.randomUUID(), "container", "conn", "original.mp4", UUID.randomUUID());
+        final long idVideo = 1L;
+        VideoInfo base = new VideoInfo(idVideo, "container", "conn", "original.mp4", UUID.randomUUID());
         VideoChunkInfo chunk = new VideoChunkInfo(base, 0, 5, "000.mp4");
         gateway.publishVideoSplitted(chunk);
         verify(producer, times(1)).send(chunk);

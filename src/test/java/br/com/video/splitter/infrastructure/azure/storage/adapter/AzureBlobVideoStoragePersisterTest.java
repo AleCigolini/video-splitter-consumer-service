@@ -27,8 +27,8 @@ class AzureBlobVideoStoragePersisterTest {
 
         when(videoInfo.getConnectionString()).thenReturn("UseDevelopmentStorage=true;");
         when(videoInfo.getContainerName()).thenReturn("container");
-        UUID id = UUID.randomUUID();
-        when(videoInfo.getId()).thenReturn(id);
+        Long id = 1L;
+        when(videoInfo.getVideoId()).thenReturn(id);
         when(videoInfo.getFileName()).thenReturn("file.mp4");
         when(blobServiceClient.getBlobContainerClient("container")).thenReturn(containerClient);
         when(containerClient.getBlobClient(id + "/chunks/file.mp4")).thenReturn(blobClient);

@@ -33,7 +33,7 @@ class SplitVideoUseCaseImplTest {
         persister = mock(VideoStoragePersister.class);
         eventGateway = mock(VideoEventGateway.class);
         useCase = Mockito.spy(new SplitVideoUseCaseImpl(persister, eventGateway));
-        videoInfo = new VideoInfo(UUID.randomUUID(), "container", "conn", "file.mp4", UUID.randomUUID());
+        videoInfo = new VideoInfo(1L, "container", "conn", "file.mp4", UUID.randomUUID());
         inputStream = new ByteArrayInputStream(new byte[]{1, 2, 3});
     }
 
@@ -130,7 +130,7 @@ class SplitVideoUseCaseImplTest {
     @Test
     void buildChunkInfo_shouldCopyFields() {
         VideoChunkInfo info = useCase.buildChunkInfo(videoInfo, "abc.mp4", 2, 10);
-        assertEquals(videoInfo.getId(), info.getId());
+        assertEquals(videoInfo.getVideoId(), info.getVideoId());
         assertEquals("abc.mp4", info.getFileName());
         assertEquals(2, info.getChunkId());
         assertEquals(10, info.getTotalChunks());
@@ -140,7 +140,7 @@ class SplitVideoUseCaseImplTest {
     void persistSingleChunk_shouldCallPersister() throws Exception {
         Path chunk = Files.createTempFile("chunk-", ".mp4");
         Files.write(chunk, new byte[]{1, 2});
-        VideoInfo info = new VideoInfo(UUID.randomUUID(), "c", "c", "f", UUID.randomUUID());
+        VideoInfo info = new VideoInfo(1L, "c", "c", "f", UUID.randomUUID());
         useCase.persistSingleChunk(chunk, info);
         verify(persister).save(eq(info), any(), eq(2L));
         Files.deleteIfExists(chunk);

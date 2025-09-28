@@ -23,7 +23,7 @@ public class AzureBlobVideoStorageFetcher implements VideoStorageFetcher {
             BlobContainerClient containerClient = blobServiceClient
                     .getBlobContainerClient(videoInfo.getContainerName());
 
-            String blobPath = videoInfo.getId() + "/" + videoInfo.getFileName();
+            String blobPath = videoInfo.getVideoId() + "/" + videoInfo.getFileName();
 
             BlobClient blobClient = containerClient.getBlobClient(blobPath);
 

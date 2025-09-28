@@ -9,14 +9,14 @@ import static org.junit.jupiter.api.Assertions.*;
 class UploadedVideoInfoDtoTest {
     @Test
     void shouldCreateDtoWithAllFields() {
-        UUID id = UUID.randomUUID();
+        Long id = 1L;
         String containerName = "container";
         String connectionString = "conn";
         String fileName = "file.mp4";
         UUID userId = UUID.randomUUID();
         UploadedVideoInfoDto dto = new UploadedVideoInfoDto(containerName, connectionString, fileName, userId);
-        dto.setId(id);
-        assertEquals(id, dto.getId());
+        dto.setVideoId(id);
+        assertEquals(id, dto.getVideoId());
         assertEquals(containerName, dto.getContainerName());
         assertEquals(connectionString, dto.getConnectionString());
         assertEquals(fileName, dto.getFileName());
@@ -26,15 +26,15 @@ class UploadedVideoInfoDtoTest {
     @Test
     void shouldAllowNullId() {
         UploadedVideoInfoDto dto = new UploadedVideoInfoDto("container", "conn", "file.mp4", null);
-        dto.setId(null);
-        assertNull(dto.getId());
+        dto.setVideoId(null);
+        assertNull(dto.getVideoId());
     }
 
     @Test
     void shouldAllowNullFieldsExceptFinals() {
         UploadedVideoInfoDto dto = new UploadedVideoInfoDto(null, null, null, null);
-        dto.setId(null);
-        assertNull(dto.getId());
+        dto.setVideoId(null);
+        assertNull(dto.getVideoId());
         assertNull(dto.getContainerName());
         assertNull(dto.getConnectionString());
         assertNull(dto.getFileName());

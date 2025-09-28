@@ -22,7 +22,7 @@ public class RequestVideoInfoMapperImpl implements RequestVideoInfoMapper {
             public VideoInfo convert(MappingContext<UploadedVideoInfoDto, VideoInfo> context) {
                 UploadedVideoInfoDto src = context.getSource();
                 return new VideoInfo(
-                        src.getId(),
+                        src.getVideoId(),
                         src.getContainerName(),
                         src.getConnectionString(),
                         src.getFileName(),
