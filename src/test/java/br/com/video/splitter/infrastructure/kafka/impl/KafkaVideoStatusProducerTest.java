@@ -1,4 +1,4 @@
-package br.com.video.splitter.infrastructure.messaging;
+package br.com.video.splitter.infrastructure.kafka.impl;
 
 import br.com.video.splitter.common.domain.dto.event.VideoStatusEvent;
 import io.smallrye.reactive.messaging.kafka.api.OutgoingKafkaRecordMetadata;
@@ -13,15 +13,15 @@ import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-class KafkaVideoStatusPublisherTest {
+class KafkaVideoStatusProducerTest {
 
     private Emitter<Object> emitter;
-    private KafkaVideoStatusPublisher publisher;
+    private KafkaVideoStatusProducer publisher;
 
     @BeforeEach
     void setUp() {
         emitter = mock(Emitter.class);
-        publisher = new KafkaVideoStatusPublisher();
+        publisher = new KafkaVideoStatusProducer();
         publisher.emitter = emitter;
         publisher.statusTopic = "video.status";
     }

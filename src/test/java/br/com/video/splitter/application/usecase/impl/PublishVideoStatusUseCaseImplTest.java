@@ -1,6 +1,6 @@
 package br.com.video.splitter.application.usecase.impl;
 
-import br.com.video.splitter.application.messaging.VideoStatusPublisher;
+import br.com.video.splitter.application.gateway.VideoStatusGateway;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -9,13 +9,13 @@ import java.util.UUID;
 import static org.mockito.Mockito.*;
 
 class PublishVideoStatusUseCaseImplTest {
-    private VideoStatusPublisher videoStatusPublisher;
+    private VideoStatusGateway videoStatusGateway;
     private PublishVideoStatusUseCaseImpl useCase;
 
     @BeforeEach
     void setUp() {
-        videoStatusPublisher = mock(VideoStatusPublisher.class);
-        useCase = new PublishVideoStatusUseCaseImpl(videoStatusPublisher);
+        videoStatusGateway = mock(VideoStatusGateway.class);
+        useCase = new PublishVideoStatusUseCaseImpl(videoStatusGateway);
     }
 
     @Test
@@ -26,7 +26,7 @@ class PublishVideoStatusUseCaseImplTest {
 
         useCase.publishStatus(userId, videoId, status);
 
-        verify(videoStatusPublisher, times(1)).publishStatus(userId, videoId, status);
+        verify(videoStatusGateway, times(1)).publishStatus(userId, videoId, status);
     }
 
     @Test
@@ -34,7 +34,7 @@ class PublishVideoStatusUseCaseImplTest {
         UUID userId = UUID.randomUUID();
         Long videoId = 456L;
         String status = "ERRO";
-        doThrow(new RuntimeException("erro de publicação")).when(videoStatusPublisher).publishStatus(userId, videoId, status);
+        doThrow(new RuntimeException("erro de publicação")).when(videoStatusGateway).publishStatus(userId, videoId, status);
 
         useCase.publishStatus(userId, videoId, status);
     }
