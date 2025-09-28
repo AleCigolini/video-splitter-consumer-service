@@ -13,6 +13,9 @@ jobs:
     name: Deploy Application on Kubernetes
     environment: dev
     runs-on: ubuntu-latest
+    env:
+      KAFKA_SASL_JAAS_CONFIG: ${{ secrets.KAFKA_SASL_JAAS_CONFIG }}
+      AZURE_STORAGE_CONNECTION_STRING: ${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}
 
     steps:
       - uses: actions/checkout@v4
