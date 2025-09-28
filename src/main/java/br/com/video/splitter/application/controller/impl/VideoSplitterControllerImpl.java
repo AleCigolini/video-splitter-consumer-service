@@ -39,7 +39,7 @@ public class VideoSplitterControllerImpl implements VideoSplitterController {
         try (InputStream video = getVideoUseCase.getVideo(videoInfo)) {
             splitVideoUseCase.splitVideo(video, videoInfo);
         } catch (Exception e) {
-            publishVideoStatusUseCase.publishStatus(uploadedVideoInfoDto.getUserId(), uploadedVideoInfoDto.getVideoId(), "falha");
+            publishVideoStatusUseCase.publishStatus(uploadedVideoInfoDto.getUserId(), uploadedVideoInfoDto.getVideoId(), "ERROR");
             throw new RuntimeException("Falha ao obter ou dividir o vídeo: " + e.getMessage(), e);
         }
     }
