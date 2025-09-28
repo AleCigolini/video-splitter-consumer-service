@@ -12,7 +12,7 @@ import org.eclipse.microprofile.reactive.messaging.Incoming;
 public class VideoSplitterConsumerImpl implements VideoSplitterConsumer {
     private final VideoSplitterController videoSplitterController;
 
-    @Incoming("video-splitter")
+    @Incoming("video-uploaded")
     public void consume(UploadedVideoInfoDto uploadedVideoInfoDto) {
         videoSplitterController.splitVideo(uploadedVideoInfoDto);
     }
