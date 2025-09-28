@@ -53,6 +53,13 @@ spec:
                 secretKeyRef:
                   name: video-splitter-secret
                   key: VIDEO_SPLITTED_TOPIC
+            - name: VIDEO_STATUS_TOPIC
+              valueFrom:
+                secretKeyRef:
+                  name: video-splitter-secret
+                  key: VIDEO_STATUS_TOPIC
+            - name: VIDEO_EVENTS_DEFAULT_TOPIC
+              value: "video.status"
             - name: SEGMENT_TIME
               value: "30"
             - name: HTTP_ROOT_PATH
