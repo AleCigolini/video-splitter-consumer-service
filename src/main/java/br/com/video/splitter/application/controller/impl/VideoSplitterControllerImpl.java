@@ -9,11 +9,13 @@ import br.com.video.splitter.common.domain.dto.request.UploadedVideoInfoDto;
 import br.com.video.splitter.domain.VideoInfo;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import org.jboss.logging.Logger;
 
 import java.io.InputStream;
 
 @ApplicationScoped
 public class VideoSplitterControllerImpl implements VideoSplitterController {
+    private static final Logger LOG = Logger.getLogger(VideoSplitterControllerImpl.class);
     private final GetVideoUseCase getVideoUseCase;
     private final RequestVideoInfoMapper requestVideoInfoMapper;
     private final SplitVideoUseCase splitVideoUseCase;
@@ -36,8 +38,8 @@ public class VideoSplitterControllerImpl implements VideoSplitterController {
         try (InputStream video = getVideoUseCase.getVideo(videoInfo)) {
             splitVideoUseCase.splitVideo(video, videoInfo);
         } catch (Exception e) {
+            LOG.errorf(e, "Erro ao processar splitVideo para userId=%s, videoId=%s", uploadedVideoInfoDto.getUserId(), uploadedVideoInfoDto.getVideoId());
             publishVideoStatusUseCase.publishStatus(uploadedVideoInfoDto.getUserId(), uploadedVideoInfoDto.getVideoId(), "ERROR");
-            throw new RuntimeException("Falha ao obter ou dividir o vídeo: " + e.getMessage(), e);
         }
     }
 }
