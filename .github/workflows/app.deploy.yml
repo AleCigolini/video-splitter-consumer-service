@@ -84,4 +84,5 @@ jobs:
 
       - name: Deploy to Kubernetes
         run: |
-          kubectl apply -f ./kubernetes/ --recursive
+          kubectl apply -f ./kubernetes/Secret.yaml.rendered
+          kubectl apply -f ./kubernetes/ --recursive --exclude=Secret.yaml
