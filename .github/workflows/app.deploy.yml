@@ -78,6 +78,10 @@ jobs:
             --resource-group rg-fiap \
             --name k8s-fiap-dev
 
+      - name: Render Kubernetes Secret with pipeline secrets
+        run: |
+          envsubst < ./kubernetes/Secret.yaml > ./kubernetes/Secret.yaml.rendered
+
       - name: Deploy to Kubernetes
         run: |
           kubectl apply -f ./kubernetes/ --recursive

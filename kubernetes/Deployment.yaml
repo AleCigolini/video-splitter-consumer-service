@@ -38,6 +38,11 @@ spec:
                 secretKeyRef:
                   name: video-splitter-secret
                   key: KAFKA_SASL_MECHANISM
+            - name: KAFKA_SASL_JAAS_CONFIG
+              valueFrom:
+                secretKeyRef:
+                  name: video-splitter-secret
+                  key: KAFKA_SASL_JAAS_CONFIG
             - name: VIDEO_UPLOADED_TOPIC
               valueFrom:
                 secretKeyRef:
@@ -68,6 +73,11 @@ spec:
                 secretKeyRef:
                   name: video-splitter-secret
                   key: VIDEO_SPLIT_CONSUMER_CONCURRENCY
+            - name: AZURE_STORAGE_CONNECTION_STRING
+              valueFrom:
+                secretKeyRef:
+                  name: video-splitter-secret
+                  key: AZURE_STORAGE_CONNECTION_STRING
           resources:
             requests:
               cpu: "400m"
