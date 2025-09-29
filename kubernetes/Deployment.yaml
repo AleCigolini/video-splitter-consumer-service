@@ -67,7 +67,7 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: video-splitter-secret
-                  key:
+                  key: SEGMENT_TIME
             - name: VIDEO_SPLIT_CONSUMER_CONCURRENCY
               valueFrom:
                 secretKeyRef:
