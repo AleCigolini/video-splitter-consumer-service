@@ -59,9 +59,15 @@ spec:
                   name: video-splitter-secret
                   key: VIDEO_STATUS_TOPIC
             - name: VIDEO_EVENTS_DEFAULT_TOPIC
-              value: "video.status"
+              valueFrom:
+                secretKeyRef:
+                  name: video-splitter-secret
+                  key: VIDEO_EVENTS_DEFAULT_TOPIC
             - name: SEGMENT_TIME
-              value: "30"
+              valueFrom:
+                secretKeyRef:
+                  name: video-splitter-secret
+                  key: SEGMENT_TIME
           resources:
             requests:
               cpu: "400m"
