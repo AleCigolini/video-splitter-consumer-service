@@ -38,11 +38,6 @@ spec:
                 secretKeyRef:
                   name: video-splitter-secret
                   key: KAFKA_SASL_MECHANISM
-            - name: KAFKA_SASL_JAAS_CONFIG
-              valueFrom:
-                secretKeyRef:
-                  name: video-splitter-secret
-                  key: KAFKA_SASL_JAAS_CONFIG
             - name: VIDEO_UPLOADED_TOPIC
               valueFrom:
                 secretKeyRef:
