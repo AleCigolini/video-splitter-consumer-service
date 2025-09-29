@@ -80,9 +80,8 @@ jobs:
 
       - name: Render Kubernetes Secret with pipeline secrets
         run: |
-          envsubst < ./kubernetes/Secret.yaml > ./kubernetes/Secret.yaml.rendered
+          envsubst < ./kubernetes/Secret.yaml > ./kubernetes/Secret.yaml
 
       - name: Deploy to Kubernetes
         run: |
-          kubectl apply -f ./kubernetes/Secret.yaml.rendered
-          kubectl apply -f ./kubernetes/ --recursive --exclude=Secret.yaml
+          kubectl apply -f ./kubernetes/ --recursive
