@@ -2,7 +2,7 @@
 
 ## Descrição
 
-Microsserviço Quarkus que consome eventos Kafka de vídeos enviados, busca o arquivo original no Azure Blob Storage, divide o vídeo em segmentos via FFmpeg e persiste os chunks no Azure Blob. A cada chunk gerado, publica eventos Kafka de "vídeo fatiado" e atualiza o status de processamento.
+Microsserviço Quarkus que consome eventos Kafka de vídeos enviados, busca o arquivo original no Azure Blob Storage, divide o vídeo em segmentos via FFmpeg e persiste os chunks no Azure Blob. A cada chunk gerado, publica eventos Kafka de "vídeo fatiado" e em caso de erro envia o status.
 
 ## Funcionalidades
 
@@ -99,7 +99,6 @@ java -jar target/quarkus-app/quarkus-run.jar
 - **Canal de saída**: `@Channel("video-events")`
   - `video.topic.split` → tópico para eventos de chunks (`KafkaVideoSplittedProducer`).
   - `video.topic.status` → tópico para eventos de status (`KafkaVideoStatusProducer`).
-  - `VIDEO_EVENTS_DEFAULT_TOPIC` pode definir o tópico default do canal.
 
 ## Health Endpoints
 
